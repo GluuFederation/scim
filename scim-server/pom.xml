@@ -79,7 +79,7 @@
         <dependency>
             <groupId>org.gluu</groupId>
             <artifactId>scim-rest</artifactId>
-            <version>${gluu.version}</version>
+            <version>4.2.1.1.Final</version>
         </dependency>
 
         <!-- RestEasy -->
