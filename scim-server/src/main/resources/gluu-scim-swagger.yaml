@@ -1,4 +1,4 @@
-# IMPORTANT: Do not use this swagger doc to generate your client. Use the accompanying jans-scim-openapi 
+# IMPORTANT: Do not use this swagger doc to generate your client. Use the accompanying gluu-scim-openapi 
 # file which conforms to OAS 3. This file was written first and then converted to OAS using converter.swagger.io. 
 # The response of /.search endpoint was enhanced there to use "oneOf" for inheritance, see 
 # https://swagger.io/docs/specification/data-models/inheritance-and-polymorphism/
@@ -6,7 +6,7 @@
 swagger: '2.0'
 
 info:
-  version: "4.2.2"
+  version: "5.0.0"
   title: SCIM API
   description: |
     Gluu SCIM 2.0 server API. Developers can think of SCIM as a REST API with endpoints exposing CRUD functionality
