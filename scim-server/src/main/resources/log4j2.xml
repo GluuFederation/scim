@@ -88,6 +88,10 @@
 		<logger name="org.gluu.oxtrust.service.custom" level="${log4j.default.log.level}" additivity="false">
 			<AppenderRef ref="OX_SCRIPT_LOG_FILE" />
 		</logger>
+		
+		<logger name="org.gluu.service.external" level="${log4j.default.log.level}" additivity="false">
+			<AppenderRef ref="OX_SCRIPT_LOG_FILE" />
+		</logger>
 
         <Root level="ERROR">
             <AppenderRef ref="Console" />

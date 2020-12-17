@@ -70,6 +70,10 @@
             <artifactId>oxtrust-service</artifactId>
             <version>${gluu.version}</version>
             <exclusions>
+            	<!-- 
+            	  Jakarta JSF provokes application startup failure: sun.reflect.annotation.TypeNotPresentExceptionProxy
+            	  A JSF jar is still needed. See below 
+            	-->
                 <exclusion>
                     <groupId>org.glassfish</groupId>
                     <artifactId>jakarta.faces</artifactId>
@@ -80,6 +84,16 @@
             <groupId>org.gluu</groupId>
             <artifactId>scim-rest</artifactId>
             <version>${gluu.version}</version>
+        </dependency>
+        
+        <!-- JSF
+            Needed to support class org.gluu.service.external.context.PersistenceExternalContext
+            jakarta cannot be used. See note above
+        -->
+        <dependency>
+            <groupId>com.sun.faces</groupId>
+            <artifactId>jsf-api</artifactId>
+            <version>2.2.20</version>
         </dependency>
 
         <!-- RestEasy -->
