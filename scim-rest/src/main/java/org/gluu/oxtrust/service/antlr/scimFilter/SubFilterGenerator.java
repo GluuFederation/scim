@@ -41,6 +41,8 @@ public class SubFilterGenerator {
     public Pair<Filter, String> build(String subAttribute, String attribute, String compValue, Type attrType,
                                       CompValueType type, ScimOperator operator, Boolean multiValued) {
 
+        log.debug("Preparing subfilter with attribute={}, subAttribute={}, compValue={}, attrType={}, multiValued={}",
+        	attribute, subAttribute, compValue, attrType, multiValued);
         Filter filth = null;
         error = null;
 
