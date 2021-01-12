@@ -1596,7 +1596,7 @@ definitions:
     required:
       - op
     properties:
-      operation:
+      op:
         type: string
         description: The kind of operation to perform
         enum:
