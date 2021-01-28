@@ -2,6 +2,7 @@
 # file which conforms to OAS 3. This file was written first and then converted to OAS using converter.swagger.io. 
 # The response of /.search endpoint was enhanced there to use "oneOf" for inheritance, see 
 # https://swagger.io/docs/specification/data-models/inheritance-and-polymorphism/
+# Also some examples for endpoint parameters were added (seem not to be supported in 2.0).
 
 swagger: '2.0'
 
@@ -23,9 +24,15 @@ schemes:
 
 tags:
  - name: user
-   description: Endpoints for management of the User resource
+   description: Endpoints for management of User resources
  - name: group
-   description: Endpoints for management of the Group resource
+   description: Endpoints for management of Group resources
+ - name: fido devices
+   description: Endpoints for management of Fido devices
+ - name: fido2 devices
+   description: Endpoints for management of Fido2 devices
+ - name: global search
+   description: Search from service root
  - name: discovery
    description: Endpoints to facilitate discovery of SCIM service provider features 
 
@@ -39,6 +46,7 @@ paths:
     get:
       tags:
         - group
+      operationId: get-groups
 
       description: Query Group resources (see section 3.4.2 of RFC 7644)
       security:
@@ -48,33 +56,37 @@ paths:
         - 
           name: attributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: A comma-separated list of attribute names to return in the response
           type: string
         - 
           name: excludedAttributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
           type: string
         - 
           name: filter
           in: query
-          description: See section 3.4.2.2 of RFC 7644
+          description: An expression specifying the search criteria. See section 3.4.2.2 of RFC 7644
           type: string
         - 
           name: startIndex
           in: query
+          description: The 1-based index of the first query result
           type: integer
         - 
           name: count
           in: query
+          description: Specifies the desired maximum number of query results per page
           type: integer
         - 
           name: sortBy
           in: query
+          description: The attribute whose value will be used to order the returned responses
           type: string
         - 
-          name: sortOder
+          name: sortOrder
           in: query
+          description: Order in which the sortBy param is applied. Allowed values are "ascending" and "descending"
           type: string
 
       responses:
@@ -93,6 +105,7 @@ paths:
     post:
       tags:
         - group
+      operationId: create-group
       consumes:
         - application/scim+json
         - application/json
@@ -105,12 +118,12 @@ paths:
         -
           name: attributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: A comma-separated list of attribute names to return in the response
           type: string
         -
           name: excludedAttributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
           type: string
         -
           name: group
@@ -142,6 +155,7 @@ paths:
     get:
       tags:
         - group
+      operationId: get-group-by-id
 
       description: Retrieves a Group resource by Id (see section 3.4.1 of RFC 7644)
       security:
@@ -151,12 +165,12 @@ paths:
         -
           name: attributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: A comma-separated list of attribute names to return in the response
           type: string
         -
           name: excludedAttributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
           type: string
         -
           name: id
@@ -180,6 +194,7 @@ paths:
     put:
       tags:
         - group
+      operationId: update-group-by-id
       consumes:
         - application/scim+json
         - application/json
@@ -195,12 +210,12 @@ paths:
         -
           name: attributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: A comma-separated list of attribute names to return in the response
           type: string
         -
           name: excludedAttributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
           type: string
         -
           name: id
@@ -241,6 +256,7 @@ paths:
     patch:
       tags:
         - group
+      operationId: patch-group-by-id
       consumes:
         - application/scim+json
         - application/json
@@ -255,12 +271,12 @@ paths:
         -
           name: attributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: A comma-separated list of attribute names to return in the response
           type: string
         -
           name: excludedAttributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
           type: string
         -
           name: id
@@ -294,6 +310,7 @@ paths:
     delete:
       tags:
         - group
+      operationId: delete-group-by-id
 
       description: Deletes a group resource (see section 3.6 of RFC 7644)
       security:
@@ -323,6 +340,7 @@ paths:
     post:
       tags:
         - group
+      operationId: search-group
       consumes:
         - application/scim+json
         - application/json
@@ -358,6 +376,9 @@ paths:
       
   /FidoDevices:
     get:
+      tags:
+        - fido devices
+      operationId: get-fido-devices
 
       description: Query Fido resources
       security:
@@ -367,12 +388,12 @@ paths:
         - 
           name: attributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: A comma-separated list of attribute names to return in the response
           type: string
         - 
           name: excludedAttributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
           type: string
         - 
           name: userId
@@ -382,22 +403,26 @@ paths:
         - 
           name: filter
           in: query
-          description: See section 3.4.2.2 of RFC 7644
+          description: An expression specifying the search criteria. See section 3.4.2.2 of RFC 7644
           type: string
         - 
           name: startIndex
           in: query
+          description: The 1-based index of the first query result
           type: integer
         - 
           name: count
           in: query
+          description: Specifies the desired maximum number of query results per page
           type: integer
         - 
           name: sortBy
           in: query
+          description: The attribute whose value will be used to order the returned responses
           type: string
         - 
-          name: sortOder
+          name: sortOrder
+          description: Order in which the sortBy param is applied. Allowed values are "ascending" and "descending"
           in: query
           type: string
 
@@ -421,6 +446,9 @@ paths:
             
   /FidoDevices/{id}:
     get:
+      tags:
+        - fido devices
+      operationId: get-fido-device-by-id
 
       description: Retrieves a U2F/Super Gluu device by Id 
       security:
@@ -430,12 +458,12 @@ paths:
         -
           name: attributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: A comma-separated list of attribute names to return in the response
           type: string
         -
           name: excludedAttributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
           type: string
         - 
           name: userId
@@ -462,6 +490,9 @@ paths:
             $ref: '#/definitions/ErrorResponse'
 
     put:
+      tags:
+        - fido devices
+      operationId: update-fido-device-by-id
       consumes:
         - application/scim+json
         - application/json
@@ -477,12 +508,12 @@ paths:
         -
           name: attributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: A comma-separated list of attribute names to return in the response
           type: string
         -
           name: excludedAttributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
           type: string
         -
           name: id
@@ -517,6 +548,9 @@ paths:
             $ref: '#/definitions/ErrorResponse'
 
     delete:
+      tags:
+        - fido devices
+      operationId: delete-fido-device-by-id
 
       description: Deletes a Fido resource
       security:
@@ -544,6 +578,9 @@ paths:
 
   /FidoDevices/.search:
     post:
+      tags:
+        - fido devices
+      operationId: search-fido-device
       consumes:
         - application/scim+json
         - application/json
@@ -588,6 +625,9 @@ paths:
 
   /Fido2Devices:
     get:
+      tags:
+        - fido2 devices
+      operationId: get-fido2-devices
 
       description: Query Fido 2 resources
       security:
@@ -597,12 +637,12 @@ paths:
         - 
           name: attributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: A comma-separated list of attribute names to return in the response
           type: string
         - 
           name: excludedAttributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
           type: string
         - 
           name: userId
@@ -612,23 +652,27 @@ paths:
         - 
           name: filter
           in: query
-          description: See section 3.4.2.2 of RFC 7644
+          description: An expression specifying the search criteria. See section 3.4.2.2 of RFC 7644
           type: string
         - 
           name: startIndex
           in: query
+          description: The 1-based index of the first query result
           type: integer
         - 
           name: count
           in: query
+          description: Specifies the desired maximum number of query results per page
           type: integer
         - 
           name: sortBy
           in: query
+          description: The attribute whose value will be used to order the returned responses
           type: string
         - 
-          name: sortOder
+          name: sortOrder
           in: query
+          description: Order in which the sortBy param is applied. Allowed values are "ascending" and "descending"
           type: string
 
       responses:
@@ -651,6 +695,9 @@ paths:
 
   /Fido2Devices/{id}:
     get:
+      tags:
+        - fido2 devices
+      operationId: get-fido2-device-by-id
 
       description: Retrieves a Fido 2 device by Id
       security:
@@ -660,12 +707,12 @@ paths:
         -
           name: attributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: A comma-separated list of attribute names to return in the response
           type: string
         -
           name: excludedAttributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
           type: string
         - 
           name: userId
@@ -692,6 +739,9 @@ paths:
             $ref: '#/definitions/ErrorResponse'
 
     put:
+      tags:
+        - fido2 devices
+      operationId: update-fido2-device-by-id
       consumes:
         - application/scim+json
         - application/json
@@ -707,12 +757,12 @@ paths:
         -
           name: attributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: A comma-separated list of attribute names to return in the response
           type: string
         -
           name: excludedAttributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
           type: string
         -
           name: id
@@ -747,6 +797,9 @@ paths:
             $ref: '#/definitions/ErrorResponse'
 
     delete:
+      tags:
+        - fido2 devices
+      operationId: delete-fido2-device-by-id
 
       description: Deletes a Fido 2 resource
       security:
@@ -774,6 +827,9 @@ paths:
 
   /Fido2Devices/.search:
     post:
+      tags:
+        - fido2 devices
+      operationId: search-fido2-device
       consumes:
         - application/scim+json
         - application/json
@@ -820,6 +876,7 @@ paths:
     get:
       tags:
         - user
+      operationId: get-users
 
       description: Query User resources (see section 3.4.2 of RFC 7644)
       security:
@@ -829,33 +886,37 @@ paths:
         - 
           name: attributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: A comma-separated list of attribute names to return in the response
           type: string
         - 
           name: excludedAttributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
           type: string
         - 
           name: filter
           in: query
-          description: See section 3.4.2.2 of RFC 7644
+          description: An expression specifying the search criteria. See section 3.4.2.2 of RFC 7644
           type: string
         - 
           name: startIndex
           in: query
+          description: The 1-based index of the first query result
           type: integer
         - 
           name: count
           in: query
+          description: Specifies the desired maximum number of query results per page
           type: integer
         - 
           name: sortBy
           in: query
+          description: The attribute whose value will be used to order the returned responses
           type: string
         - 
-          name: sortOder
+          name: sortOrder
           in: query
+          description: Order in which the sortBy param is applied. Allowed values are "ascending" and "descending"
           type: string
 
       responses:
@@ -874,6 +935,7 @@ paths:
     post:
       tags:
         - user
+      operationId: create-user
       consumes:
         - application/scim+json
         - application/json
@@ -886,12 +948,12 @@ paths:
         -
           name: attributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: A comma-separated list of attribute names to return in the response
           type: string
         -
           name: excludedAttributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
           type: string
         -
           name: user
@@ -923,6 +985,7 @@ paths:
     get:
       tags:
         - user
+      operationId: get-user-by-id
 
       description: Retrieves a User resource by Id (see section 3.4.1 of RFC 7644)
       security:
@@ -932,12 +995,12 @@ paths:
         -
           name: attributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: A comma-separated list of attribute names to return in the response
           type: string
         -
           name: excludedAttributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
           type: string
         -
           name: id
@@ -961,6 +1024,7 @@ paths:
     put:
       tags:
         - user
+      operationId: update-user-by-id
       consumes:
         - application/scim+json
         - application/json
@@ -976,12 +1040,12 @@ paths:
         -
           name: attributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: A comma-separated list of attribute names to return in the response
           type: string
         -
           name: excludedAttributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
           type: string
         -
           name: id
@@ -1022,6 +1086,7 @@ paths:
     patch:
       tags:
         - user
+      operationId: patch-user-by-id
       consumes:
         - application/scim+json
         - application/json
@@ -1036,12 +1101,12 @@ paths:
         -
           name: attributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: A comma-separated list of attribute names to return in the response
           type: string
         -
           name: excludedAttributes
           in: query
-          description: See section 3.9 of RFC 7644
+          description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
           type: string
         -
           name: id
@@ -1075,6 +1140,7 @@ paths:
     delete:
       tags:
         - user
+      operationId: delete-user-by-id
 
       description: Deletes a user resource
       security:
@@ -1104,6 +1170,7 @@ paths:
     post:
       tags:
         - user
+      operationId: search-user
       consumes:
         - application/scim+json
         - application/json
@@ -1139,6 +1206,9 @@ paths:
 
   /.search:
     post:
+      tags:
+        - global search
+      operationId: search-resources
       consumes:
         - application/scim+json
         - application/json
@@ -1206,6 +1276,7 @@ paths:
     get:
       tags:
         - discovery
+      operationId: get-service-provider-config
       description: Describes the SCIM specification features available (see section 5 of RFC 7644)
       produces:
         - application/scim+json
@@ -1224,6 +1295,7 @@ paths:
     get:
       tags:
         - discovery
+      operationId: get-resource-types
       description: |
         This endpoint is used to discover the types of resources available (see section 4 of RFC 7644)
       produces:
@@ -1243,6 +1315,7 @@ paths:
     get:
       tags:
         - discovery
+      operationId: get-resource-type-by-id
       description: |
         Describes the endpoint, schemas and extensions supported by a specific kind of resource.
         It returns a specific portion of the ouput of the more general /Resources endpoint
@@ -1275,6 +1348,7 @@ paths:
     get:
       tags:
         - discovery
+      operationId: get-schemas
       description: |
         Endpoint used to retrieve information about schemas supported (see section 
         4 of RFC 7644)
@@ -1295,9 +1369,10 @@ paths:
     get:
       tags:
         - discovery
+      operationId: get-schema-by-uri
       description: Retrieves information about a specific resource
       produces:
-        - application/scim+json  
+        - application/scim+json 
       
       parameters:
         -
@@ -1335,22 +1410,30 @@ definitions:
           example: "urn:ietf:params:scim:api:messages:2.0:SearchRequest"
       attributes:
         type: array
+        description: A list of attribute names to return in the response
         items:
           type: string
       excludedAttributes:
         type: array
+        description: When specified, the response will contain a default set of attributes minus those listed here
         items:
           type: string
       filter:
         type: string
+        description: An expression specifying the search criteria. See section 3.4.2.2 of RFC 7644
+        example: userName eq "jhon" and meta.lastModified gt "2011-05-13T04:42:34Z"
       sortBy:
         type: string
+        description: The attribute whose value will be used to order the returned responses
       sortOrder:
         type: string
+        description: Order in which the sortBy param is applied. Allowed values are "ascending" and "descending"
       startIndex:
         type: integer
+        description: The 1-based index of the first query result
       count:
-        type: integer    
+        type: integer
+        description: Specifies the desired maximum number of query results per page  
   ErrorResponse:
     description: See section 3.12 of RFC 7644
     type: object
@@ -1365,10 +1448,13 @@ definitions:
           example: "urn:ietf:params:scim:api:messages:2.0:Error"
       status:
         type: string
+        description: HTTP status code as string
       scimType:
         type: string
+        description: A detail error keyword. See table 9 of RFC 7644
       detail:
         type: string
+        description: A detailed human-readable message of the error
   ServiceProviderConfigResponse:
     description: See section 5 of RFC 7643
     type: object
@@ -1540,12 +1626,15 @@ definitions:
           example: "urn:ietf:params:scim:api:messages:2.0:ListResponse"
       totalResults:
         type: integer
+        description: Total number of results returned by the search. The value may be larger than the number of resources returned due to pagination
       startIndex:
         type: integer
+        description: The 1-based index of the first result in the current set of search results
       itemsPerPage:
         type: integer
+        description: The number of resources returned in a results page
   GroupListResponse:
-    description: See section 3.4.2.4 of RFC 7644
+    description: Results for groups search. See section 3.4.2.4 of RFC 7644
     allOf: 
       - $ref: '#/definitions/BasicListResponse'
       - type: object
@@ -1555,6 +1644,7 @@ definitions:
             items:
               $ref: "#/definitions/GroupResource"
   FidoListResponse:
+    description: Results for fido devices search
     allOf: 
       - $ref: '#/definitions/BasicListResponse'
       - type: object
@@ -1564,6 +1654,7 @@ definitions:
             items:
               $ref: "#/definitions/FidoDeviceResource"
   Fido2ListResponse:
+    description: Results for fido 2 devices search
     allOf: 
       - $ref: '#/definitions/BasicListResponse'
       - type: object
@@ -1573,7 +1664,7 @@ definitions:
             items:
               $ref: "#/definitions/Fido2DeviceResource"
   UserListResponse:
-    description: See section 3.4.2.4 of RFC 7644
+    description: Results for users search. See section 3.4.2.4 of RFC 7644
     allOf: 
       - $ref: '#/definitions/BasicListResponse'
       - type: object
@@ -1621,6 +1712,7 @@ definitions:
         description: Only required when op is add or replace
   PatchRequest:
     type: object
+    description: Stores one or more patch operations
     required:
       - Operations
     properties:
@@ -1639,13 +1731,14 @@ definitions:
     properties:
       method:
         type: string
-        example: "PUT"
+        example: PUT
       bulkId:
         type: string
         description: |
           Used to bind the id generated for a created resource (via POST) to a named variable for later reuse
       path:
         type: string
+        description: Path of the endpoint the operation uses relative to the server root, eg. /Users  
       data:
         type: object
         description: Payload associated to this operation
@@ -1658,6 +1751,7 @@ definitions:
         type: string
   BulkData:
     type: object
+    description: Used to encapsulate one or more succesive SCIM operations in a single request
     properties:
       schemas:
         type: array
@@ -1674,8 +1768,9 @@ definitions:
       - properties:
           failOnErrors:
             type: integer
+            description: The number of errors that can be accepted before the Bulk request is terminated and a response is returned
   Meta:
-    description: See section 3.1 of RFC 7643
+    description: Descriptive information about a resource. See section 3.1 of RFC 7643
     type: object
     properties:
       resourceType:
@@ -1688,15 +1783,20 @@ definitions:
         type: string
   Member:
     type: object
+    description: Represents a member of a Group resource
     properties:
       $ref:
         type: string
+        description: URI of the SCIM resource
       type:
         type: string
+        description: The type of member. Only "User" is allowed
       display:
         type: string
+        description: A human readable name, primarily used for display purposes
       value:
         type: string
+        description: Identifier (ID) of the resource
   Name:
     description: See section 4.1.1 of RFC 7643
     type: object
@@ -1709,38 +1809,43 @@ definitions:
         type: string
       honorificPrefix:
         type: string
+        description: A "title" like "Ms.", "Mrs."
       honorificSuffix:
         type: string
+        description: Name suffix, like "Junior", "The great", "III"
       formatted:
         type: string
+        description: Full name, including all middle names, titles, and suffixes as appropriate
   Email:
     description: See section 4.1.2 of RFC 7643
     type: object
     properties:
       value:
         type: string
-        example: "gossow@nsfw.com"
+        example: gossow@nsfw.com
       display:
         type: string
       type:
         type: string
-        example: "work"
+        example: work
       primary:
         type: boolean
+        description: Denotes if this is the preferred e-mail among others, if any
   PhoneNumber:
     description: See section 4.1.2 of RFC 7643
     type: object
     properties:
       value:
         type: string
-        example: "+1-555-555-8377"
+        example: +1-555-555-8377
       display:
         type: string
       type:
         type: string
-        example: "fax"
+        example: fax
       primary:
         type: boolean
+        description: Denotes if this is the preferred phone number among others, if any 
   InstantMessagingAddress:
     description: See section 4.1.2 of RFC 7643
     type: object
@@ -1751,11 +1856,12 @@ definitions:
         type: string
       type:
         type: string
-        example: "gtalk"
+        example: gtalk
       primary:
         type: boolean
+        description: Denotes if this is the preferred messaging addressed among others, if any
   Photo:
-    description: See section 4.1.2 of RFC 7643
+    description: Points to a resource location representing the user's image. See section 4.1.2 of RFC 7643
     type: object
     properties:
       value:
@@ -1765,75 +1871,88 @@ definitions:
         type: string
       type:
         type: string
-        example: "thumbnail"
+        example: thumbnail
       primary:
         type: boolean
+        description: Denotes if this is the preferred photo among others, if any
   Address:
-    description: See section 4.1.2 of RFC 7643
+    description: Physical mailing address for this user. See section 4.1.2 of RFC 7643
     type: object
     properties:
       formatted:
         type: string
+        description: Full mailing address, formatted for display or use with a mailing label
       streetAddress:
         type: string
-        example: "56 Acacia Avenue"
+        example: 56 Acacia Avenue
       locality:
         type: string
+        description: City or locality of the address
       region:
         type: string
+        description: State or region of the address
       postalCode:
         type: string
+        description: Zip code
       country:
         type: string
+        description: Country expressed in ISO 3166-1 "alpha-2" code format
+        example: UK
       type:
         type: string
-        example: "home"
+        example: home
       primary:
         type: boolean
+        description: Denotes if this is the preferred address among others, if any
   Group:
     description: See section 4.1.2 of RFC 7643
     type: object
     properties:
       value:
         type: string
-        example: "180ee84f0671b1"
+        description: Group identifier
+        example: 180ee84f0671b1
       $ref:
         type: string
+        description: URI associated to the group
         example: "https://nsfw.com/scim/restv1/v2/Groups/180ee84f0671b1"
       display:
         type: string
-        example: "Cult managers"
+        example: Cult managers
       type:
         type: string
-        example: "direct"
+        description: Describes how the group membership was derived
+        example: direct
   Entitlement:
-    description: See section 4.1.2 of RFC 7643
+    description: Entitlements represent things a user has, like rights. See section 4.1.2 of RFC 7643
     type: object
     properties:
       value:
         type: string
-        example: "Stakeholder"
+        example: Stakeholder
       display:
         type: string
       type:
         type: string
       primary:
         type: boolean
+        description: Denotes if this is the preferred entitlement among others, if any
   Role:
     description: See section 4.1.2 of RFC 7643
     type: object
     properties:
       value:
         type: string
-        example: "Project manager"
+        example: Project manager
       display:
         type: string
       type:
         type: string
       primary:
         type: boolean
+        description: Denotes if this is the preferred role among others, if any
   X509Certificate:
-    description: See section 4.1.2 of RFC 7643
+    description: A certificate associated with the user. See section 4.1.2 of RFC 7643
     type: object
     properties:
       value:
@@ -1845,6 +1964,7 @@ definitions:
         type: string
       primary:
         type: boolean
+        description: Denotes if this is the preferred certificate among others, if any
   BaseResource:
     type: object
     properties:
@@ -1852,19 +1972,21 @@ definitions:
         type: array
         items:
           type: string
+        description: URIs that are used to indicate the namespaces of the SCIM schemas that define the attributes present in the current structure
       id:
         type: string
-        description: See section 3.1 of RFC 7643
+        description: A unique identifier for a SCIM resource. See section 3.1 of RFC 7643
       meta:
         $ref: '#/definitions/Meta'
   GroupResource:
-    description: See section 4.2 of RFC 7643
+    description: Represents a group resource. See section 4.2 of RFC 7643
     allOf: 
       - $ref: '#/definitions/BaseResource'
       - type: object
       - properties:
           displayName:
             type: string
+            description: Group name suitable for display to end-users
           members:
             type: array
             items:
@@ -1907,6 +2029,7 @@ definitions:
               - active
               - compromised
           displayName:
+            description: Device name suitable for display to end-users
             type: string
           description:
             type: string
@@ -1933,35 +2056,48 @@ definitions:
               - pending
           displayName:
             type: string
+            description: Device name suitable for display to end-users
   UserResource:
-    description: See section 4.1 of RFC 7643
+    description: Represents a user resource. See section 4.1 of RFC 7643
     allOf: 
       - $ref: '#/definitions/BaseResource'
       - type: object
       - properties:
           externalId:
             type: string
-            description: See section 3.1 of RFC 7643
+            description: Identifier of the resource useful from the perspective of the provisioning client. See section 3.1 of RFC 7643
           userName:
             type: string
+            description: Identifier for the user, typically used by the user to directly authenticate (id and externalId are opaque identifiers generally not known by users)
           name:
             $ref: '#/definitions/Name'
           displayName:
             type: string
+            description: Name of the user suitable for display to end-users
           nickName:
             type: string
+            description: Casual way to address the user in real life
           profileUrl:
             type: string
+            description: URI pointing to a location representing the User's online profile
           title:
             type: string
+            example: Vice President
           userType:
             type: string
+            description: Used to identify the relationship between the organization and the user
+            example: Contractor
           preferredLanguage:
             type: string
+            description: Preferred language as used in the Accept-Language HTTP header
+            example: en
           locale:
             type: string
+            description: Used for purposes of localizing items such as currency and dates
+            example: en-US
           timezone:
             type: string
+            example: America/Los_Angeles
           active:
             type: boolean
           password:
