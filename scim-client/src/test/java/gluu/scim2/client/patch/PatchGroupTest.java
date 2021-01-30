@@ -23,13 +23,7 @@ import static javax.ws.rs.core.Response.Status.*;
 
 import static org.testng.Assert.*;
 
-/**
- * NOTES:
- * Check first if /install/community-edition-setup/templates/test/scim-client/data/scim-test-data.ldif has been loaded to LDAP.
- *
- * Created by jgomer on 2017-11-13.
- */
-public class PatchGroupTest extends BaseTest{
+public class PatchGroupTest extends BaseTest {
 
     private GroupResource group;
     private static final Class<GroupResource> groupCls=GroupResource.class;

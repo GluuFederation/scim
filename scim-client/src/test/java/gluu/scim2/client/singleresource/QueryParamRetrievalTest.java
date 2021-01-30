@@ -14,12 +14,6 @@ import static javax.ws.rs.core.Response.Status.OK;
 
 import static org.testng.Assert.*;
 
-/**
- * NOTES:
- * Check first if /install/community-edition-setup/templates/test/scim-client/data/scim-test-data.ldif has been loaded to LDAP.
- *
- * Created by jgomer on 2017-11-12.
- */
 public class QueryParamRetrievalTest extends UserBaseTest {
 
     private UserResource user;
