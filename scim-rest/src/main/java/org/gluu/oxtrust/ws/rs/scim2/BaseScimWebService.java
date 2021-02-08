@@ -77,7 +77,7 @@ public class BaseScimWebService {
 
     public static final String SEARCH_SUFFIX = ".search";
     
-    private static final String CN_ENV_VAR = "CN_VERSION";
+    private static final String CN_ENV_VAR = "GLUU_VERSION";
 
     String endpointUrl;
 
