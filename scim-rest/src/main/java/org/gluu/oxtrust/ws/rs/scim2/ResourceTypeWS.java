@@ -1,8 +1,3 @@
-/*
- * oxTrust is available under the MIT License (2008). See http://opensource.org/licenses/MIT for full text.
- *
- * Copyright (c) 2015, Gluu
- */
 package org.gluu.oxtrust.ws.rs.scim2;
 
 import static org.gluu.oxtrust.model.scim2.Constants.MEDIA_TYPE_SCIM_JSON;
@@ -165,7 +160,7 @@ public class ResourceTypeWS extends BaseScimWebService {
     @PostConstruct
     public void setup(){
         //weld makes you cry if using getClass() here
-        endpointUrl=appConfiguration.getBaseEndpoint() + ResourceTypeWS.class.getAnnotation(Path.class).value();
+        init(ResourceTypeWS.class);
     }
 
     private void fillResourceType(ResourceType rt, Schema schemaAnnot, String endpointUrl, String location, List<SchemaExtensionHolder> schemaExtensions){

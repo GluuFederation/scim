@@ -334,8 +334,8 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
 
     @PostConstruct
     public void setup(){
-        //Do not use getClass() here... a typical weld issue...
-        endpointUrl=appConfiguration.getBaseEndpoint() + UserWebService.class.getAnnotation(Path.class).value();
+        //Do not use getClass() here...
+        init(UserWebService.class);
     }
 
 }

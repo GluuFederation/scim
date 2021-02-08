@@ -405,8 +405,8 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
 
     @PostConstruct
     public void setup(){
-        //Do not use getClass() here... a typical weld issue...
-        endpointUrl=appConfiguration.getBaseEndpoint() + FidoDeviceWebService.class.getAnnotation(Path.class).value();
+        //Do not use getClass() here...
+        init(FidoDeviceWebService.class);
         ldapBackend = scimFilterParserService.isLdapBackend();
     }
 

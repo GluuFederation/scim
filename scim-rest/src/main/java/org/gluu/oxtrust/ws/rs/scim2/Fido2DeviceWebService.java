@@ -359,7 +359,7 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
 
     @PostConstruct
     public void setup(){
-        endpointUrl=appConfiguration.getBaseEndpoint() + Fido2DeviceWebService.class.getAnnotation(Path.class).value();
+        init(Fido2DeviceWebService.class);
     }
 
 }

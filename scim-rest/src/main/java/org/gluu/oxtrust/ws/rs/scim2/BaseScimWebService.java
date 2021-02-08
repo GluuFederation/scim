@@ -1,8 +1,3 @@
-/*
- * oxTrust is available under the MIT License (2008). See http://opensource.org/licenses/MIT for full text.
- *
- * Copyright (c) 2013, Gluu
- */
 package org.gluu.oxtrust.ws.rs.scim2;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -18,6 +13,7 @@ import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.Path;
 
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -80,6 +76,8 @@ public class BaseScimWebService {
     ExternalScimService externalScimService;
 
     public static final String SEARCH_SUFFIX = ".search";
+    
+    private static final String CN_ENV_VAR = "CN_VERSION";
 
     String endpointUrl;
 
@@ -134,6 +132,16 @@ public class BaseScimWebService {
         List<String> values=headers.getRequestHeaders().get(name);
         return (values==null || values.size()==0) ? null : values.get(0);
     }
+        
+    protected void init(Class<? extends BaseScimWebService> cls) {
+    	
+    	if (endpointUrl == null) {
+			String base = appConfiguration.getBaseEndpoint(); 
+			base = System.getenv(CN_ENV_VAR) == null ? base : base.replaceFirst("/identity", "/scim");
+			endpointUrl = base + cls.getAnnotation(Path.class).value();
+    	}
+    	
+    }
 
     protected void assignMetaInformation(BaseScimResource resource){
 
@@ -170,7 +178,7 @@ public class BaseScimWebService {
     }
 
     //Transform scim attribute to LDAP attribute
-    String translateSortByAttribute(Class<? extends BaseScimResource> cls, String sortBy) {
+    protected String translateSortByAttribute(Class<? extends BaseScimResource> cls, String sortBy) {
 
         String type=ScimResourceUtil.getType(cls);
         if (StringUtils.isEmpty(sortBy) || type==null)
@@ -236,7 +244,7 @@ public class BaseScimWebService {
 
     }
 
-    String getListResponseSerialized(int total, int startIndex, List<BaseScimResource> resources, String attrsList,
+    protected String getListResponseSerialized(int total, int startIndex, List<BaseScimResource> resources, String attrsList,
                                      String excludedAttrsList, boolean ignoreResults) throws IOException{
 
         ListResponse listResponse = new ListResponse(startIndex, resources.size(), total);
