@@ -13,13 +13,6 @@ import static javax.ws.rs.core.Response.Status.*;
 
 import static org.testng.Assert.*;
 
-/**
- * NOTES:
- * Before running this test, first register at least one device via the FIDO U2F API.
- *
- * Created by jgomer on 2017-10-21.
- * Based on former Val Pecaoco's gluu.scim2.client.fido.FidoDevicesObjectTests
- */
 public class FidoU2fDeviceTest extends BaseTest {
 
     private FidoDeviceResource device;
@@ -91,7 +84,7 @@ public class FidoU2fDeviceTest extends BaseTest {
                 assertEquals(BeanUtils.getProperty(updated, path), val);
         }
 
-        //Update an immutable attribute (originally null)
+        //Update an immutable attribute (originally null). Per spec, uninitialized immutable attributes can be set
         assertNull(updated.getDeviceData());
         updated.setDeviceData("Dummy device data");
         response=client.updateDevice(updated, updated.getId(), null, null);
@@ -105,7 +98,7 @@ public class FidoU2fDeviceTest extends BaseTest {
 
     }
 
-    @Test(dependsOnMethods = "updateWithObject", alwaysRun = true)
+    //@Test(dependsOnMethods = "updateWithObject", alwaysRun = true)
     public void delete(){
         logger.debug("Deleting device");
         Response response=client.deleteDevice(device.getId());
