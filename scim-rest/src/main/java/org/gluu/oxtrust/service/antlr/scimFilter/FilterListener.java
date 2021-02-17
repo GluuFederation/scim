@@ -172,7 +172,7 @@ public class FilterListener extends ScimFilterBaseListener {
 		
  		Boolean multiValued;
  		
- 		if (dbAttribute.equals("mail") && !ldapBackend) {
+ 		if (!ldapBackend  && (dbAttribute.equals("mail") || dbAttribute.equals("oxPPID"))) {
  			multiValued = null;
  		} else {
  			multiValued = !attrAnnot.multiValueClass().equals(NullType.class);
