@@ -2,6 +2,7 @@ package org.gluu.oxtrust.service.scim2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.gluu.persist.model.base.CustomObjectAttribute;
 import org.gluu.oxtrust.model.GluuGroup;
 import org.gluu.oxtrust.model.scim.ScimCustomPerson;
 import org.gluu.oxtrust.model.scim2.user.Email;
@@ -9,15 +10,19 @@ import org.gluu.oxtrust.service.AttributeService;
 import org.gluu.oxtrust.service.IGroupService;
 import org.gluu.oxtrust.service.IPersonService;
 import org.gluu.oxtrust.util.ServiceUtil;
+import org.gluu.model.GluuAttribute;
+import org.gluu.persist.ldap.impl.LdapEntryManagerFactory;
 import org.gluu.persist.PersistenceEntryManager;
 import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.Stateless;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -38,17 +43,22 @@ public class UserPersistenceHelper {
 
     @Inject
     private IGroupService groupService;
+    
+    private Map<String, GluuAttribute> attributesMap;
 
     public void addCustomObjectClass(ScimCustomPerson person) {
-        String[] customObjectClasses = Optional.ofNullable(person.getCustomObjectClasses()).orElse(new String[0]);
-        Set<String> customObjectClassesSet = new HashSet<>(Stream.of(customObjectClasses).collect(Collectors.toList()));
-        customObjectClassesSet.add(attributeService.getCustomOrigin());
-        person.setCustomObjectClasses(customObjectClassesSet.toArray(new String[0]));
+    	if (LdapEntryManagerFactory.PERSISTENCE_TYPE.equals(persistenceEntryManager.getPersistenceType())) {
+            String[] customObjectClasses = Optional.ofNullable(person.getCustomObjectClasses()).orElse(new String[0]);
+            Set<String> customObjectClassesSet = new HashSet<>(Stream.of(customObjectClasses).collect(Collectors.toList()));
+            customObjectClassesSet.add(attributeService.getCustomOrigin());
+            person.setCustomObjectClasses(customObjectClassesSet.toArray(new String[0]));
+        }
     }
 
     public void addPerson(ScimCustomPerson person) throws Exception {
         //It is guaranteed that no duplicate UID occurs when this method is called
         person.setCreationDate(new Date());
+        applyMultiValued(person.getTypedCustomAttributes());
         persistenceEntryManager.persist(person);
     }
 
@@ -72,6 +82,7 @@ public class UserPersistenceHelper {
             person.setAttribute("oxTrustMetaLastModified",
                     ISODateTimeFormat.dateTime().withZoneUTC().print(updateDate.getTime()));
         }
+        applyMultiValued(person.getTypedCustomAttributes());
         persistenceEntryManager.merge(person);
 
     }
@@ -131,4 +142,23 @@ public class UserPersistenceHelper {
         persistenceEntryManager.removeRecursively(person.getDn());
     }
 
+    @PostConstruct
+    private void init() {
+    	attributesMap = attributeService.getAllAttributes().stream().collect(
+    		    Collectors.toMap(GluuAttribute::getName, Function.identity())
+    		);
+    }
+    
+	private void applyMultiValued(List<CustomObjectAttribute> customAttributes) {
+		
+		for (CustomObjectAttribute customAttribute : customAttributes) {
+			
+			boolean multiValued = Optional.ofNullable(attributesMap.get(customAttribute.getName()))
+			    .map(GluuAttribute::getOxMultiValuedAttribute)
+			    .map(Boolean::booleanValue).orElse(false);
+			    
+			customAttribute.setMultiValued(multiValued);
+		}
+	}
+    
 }
