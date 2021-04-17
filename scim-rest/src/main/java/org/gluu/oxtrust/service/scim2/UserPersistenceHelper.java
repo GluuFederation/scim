@@ -145,7 +145,8 @@ public class UserPersistenceHelper {
     @PostConstruct
     private void init() {
     	attributesMap = attributeService.getAllAttributes().stream().collect(
-    		    Collectors.toMap(GluuAttribute::getName, Function.identity())
+    		    Collectors.toMap(GluuAttribute::getName, Function.identity(),
+    		    	(name, attr) -> attr)    //Avoid exception due to duplicate keys
     		);
     }
     
