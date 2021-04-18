@@ -151,14 +151,15 @@ public class UserPersistenceHelper {
     }
     
 	private void applyMultiValued(List<CustomObjectAttribute> customAttributes) {
-		
+        
 		for (CustomObjectAttribute customAttribute : customAttributes) {
 			
-			boolean multiValued = Optional.ofNullable(attributesMap.get(customAttribute.getName()))
+			Optional.ofNullable(attributesMap.get(customAttribute.getName()))
 			    .map(GluuAttribute::getOxMultiValuedAttribute)
-			    .map(Boolean::booleanValue).orElse(false);
+			    .map(Boolean::booleanValue)
+			    .ifPresent(mv -> customAttribute.setMultiValued(mv));
 			    
-			customAttribute.setMultiValued(multiValued);
+			//when any of the optionals above is empty, it means "we aint' sure" about cardinality
 		}
 	}
     
