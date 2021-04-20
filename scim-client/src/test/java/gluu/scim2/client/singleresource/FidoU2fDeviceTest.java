@@ -7,6 +7,7 @@ import org.gluu.oxtrust.model.scim2.fido.FidoDeviceResource;
 import org.gluu.oxtrust.model.scim2.util.IntrospectUtil;
 import org.testng.annotations.Test;
 
+import java.util.Optional;
 import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.Response.Status.*;
@@ -19,16 +20,21 @@ public class FidoU2fDeviceTest extends BaseTest {
     private static final Class<FidoDeviceResource> fidoClass=FidoDeviceResource.class;
 
     @Test
-    public void search(){
+    public void search() {
 
         logger.debug("Searching all fido u2f devices");
         Response response=client.searchDevices(null, "application pr", null, null, null, null, null, null);
         assertEquals(response.getStatus(), OK.getStatusCode());
 
         ListResponse listResponse=response.readEntity(ListResponse.class);
-        //Work upon the first device of the list only
-        device=(FidoDeviceResource) listResponse.getResources().get(0);
-        assertNotNull(device);
+        
+        //Work upon the first device whose deviceData is empty
+        Optional<FidoDeviceResource> opt = listResponse.getResources().stream()
+                                               .map(FidoDeviceResource.class::cast)
+                                               .filter(dev -> dev.getDeviceData() == null).findAny();	
+        
+        assertTrue(opt.isPresent());        
+        device = opt.get();
         logger.debug("First device {} picked", device.getId());
 
     }
