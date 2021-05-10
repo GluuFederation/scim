@@ -68,7 +68,7 @@
         <dependency>
             <groupId>org.gluu</groupId>
             <artifactId>oxtrust-service</artifactId>
-            <version>4.2.3.sp1.Final</version>
+            <version>4.2.3.sp1</version>
             <exclusions>
             	<!-- 
             	  Jakarta JSF provokes application startup failure: sun.reflect.annotation.TypeNotPresentExceptionProxy
