@@ -13,7 +13,7 @@
 	<parent>
 		<groupId>org.gluu</groupId>
 		<artifactId>scim</artifactId>
-		<version>4.2.3.Final</version>
+		<version>4.2.3.1.Final</version>
 	</parent>
 
 	<dependencies>
@@ -26,7 +26,7 @@
         <dependency>
             <groupId>org.gluu</groupId>
             <artifactId>oxtrust-service</artifactId>
-            <version>${gluu.version}</version>
+            <version>4.2.3.sp1.Final</version>
         </dependency>
         <dependency>
             <groupId>org.gluu</groupId>
