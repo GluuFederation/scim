@@ -83,7 +83,7 @@
         <dependency>
             <groupId>org.gluu</groupId>
             <artifactId>scim-rest</artifactId>
-            <version>${gluu.version}</version>
+            <version>4.2.3.1.Final</version>
         </dependency>
         
         <!-- JSF
