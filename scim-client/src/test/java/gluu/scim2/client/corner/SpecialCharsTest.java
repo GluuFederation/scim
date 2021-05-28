@@ -1,10 +1,12 @@
 package gluu.scim2.client.corner;
 
 import gluu.scim2.client.UserBaseTest;
+import gluu.scim2.listener.SkipTest;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.gluu.oxtrust.model.scim2.ListResponse;
 import org.gluu.oxtrust.model.scim2.SearchRequest;
 import org.gluu.oxtrust.model.scim2.user.UserResource;
+import org.gluu.util.StringHelper;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -14,9 +16,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static javax.ws.rs.core.Response.Status.OK;
-
 import static org.testng.Assert.*;
 
+@SkipTest(databases = { "couchbase" })
 public class SpecialCharsTest extends UserBaseTest {
 
     private static final String[] SPECIAL_CHARS = new String[]{"*", "\\", "(", ")"};    //, "\0" (see nullChar test)
@@ -26,9 +28,9 @@ public class SpecialCharsTest extends UserBaseTest {
 
     @BeforeTest
     private void addOne() {
-        specialFilterLdapChars = Stream.of(SPECIAL_CHARS).map(StringEscapeUtils::escapeJson).collect(Collectors.toList());
+        specialFilterLdapChars = Stream.of(SPECIAL_CHARS).map(StringHelper::escapeJson).collect(Collectors.toList());
         //Per customer request
-        specialFilterLdapChars.add(StringEscapeUtils.escapeJson("/"));
+        specialFilterLdapChars.add(StringHelper.escapeJson("/"));
     }
 
     @Test
@@ -54,6 +56,7 @@ public class SpecialCharsTest extends UserBaseTest {
 
     }
 
+    @SkipTest(databases = { "spanner", "couchbase" })
     @Test
     public void containabilityAll() {
 
@@ -76,6 +79,7 @@ public class SpecialCharsTest extends UserBaseTest {
 
     }
 
+    @SkipTest(databases = { "spanner", "couchbase" })
     @Test
     public void containabilityAllInGivenName() {
 

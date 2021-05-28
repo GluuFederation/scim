@@ -1,6 +1,7 @@
 package gluu.scim2.client.singleresource;
 
 import gluu.scim2.client.UserBaseTest;
+import gluu.scim2.listener.SkipTest;
 import org.gluu.oxtrust.model.scim2.CustomAttributes;
 import org.gluu.oxtrust.model.scim2.ListResponse;
 import org.gluu.oxtrust.model.scim2.SearchRequest;
@@ -26,7 +27,7 @@ public class FullUserTest extends UserBaseTest {
     private UserResource user;
 
     @Parameters("user_full_create")
-    @Test
+    @Test(dependsOnGroups="avgTestFinished")
     public void createFull(String json){
         logger.debug("Creating user from json...");
         user=createUserFromJson(json);
@@ -44,7 +45,7 @@ public class FullUserTest extends UserBaseTest {
 
     @Parameters("user_full_update")
     @Test(dependsOnMethods = "createFull")
-    public void update(String json){
+    public void update(String json) {
 
         logger.debug("Updating user {} with json", user.getUserName());
         Response response=client.updateUser(json, user.getId(), null, null);
@@ -80,7 +81,7 @@ public class FullUserTest extends UserBaseTest {
 
     }
 
-    @Test(dependsOnMethods="update")
+    @Test(dependsOnMethods="update", groups = "lastTests")
     public void updateNonExisting(){
 
         //Set values missing in the user so far
@@ -97,14 +98,15 @@ public class FullUserTest extends UserBaseTest {
 
     }
 
-    @Test(dependsOnMethods="updateNonExisting")
+    @SkipTest(databases = { "couchbase", "spanner" })
+    @Test(dependsOnMethods="updateNonExisting", groups = "lastTests")
     public void searchEscapingChars() {
 
         char quote = '"', backslash = '\\';
         String scapedQuote = String.valueOf(new char[]{backslash, quote});
         String scapedBkSlash = String.valueOf(new char[]{backslash, backslash});
         //Used to generate a random Unicode char
-        String rnd = UUID.randomUUID().toString().substring(0,4);
+        String rnd = UUID.randomUUID().toString().substring(0, 4);
         String unicodeStr = String.valueOf(Character.toChars(Integer.parseInt(rnd, 16)));
 
         Name name = user.getName();
@@ -131,7 +133,7 @@ public class FullUserTest extends UserBaseTest {
         SearchRequest sr = new SearchRequest();
         sr.setFilter(filter);
         sr.setCount(1);
-        sr.setAttributes("name, "+ customFirst);
+        sr.setAttributes("name, " + customFirst);
 
         response = client.searchUsersPost(sr);
         user = (UserResource) response.readEntity(ListResponse.class).getResources().get(0);
@@ -147,8 +149,8 @@ public class FullUserTest extends UserBaseTest {
 
     }
 
-    @Test(dependsOnMethods = "searchEscapingChars", alwaysRun = true)
-    public void delete(){
+    @Test(dependsOnGroups = "lastTests", alwaysRun = true)
+    public void delete() {
         deleteUser(user);
     }
 

@@ -2,7 +2,12 @@
 
 <suite name="SCIM-Client v2.0" parallel="false">
 
-    <parameter name="file" value="target/test-classes/testng2.properties" />
+    <parameter name="propertiesFile" value="target/test-classes/testng2.properties" />
+    
+    <listeners>
+        <listener class-name="gluu.scim2.listener.AlterSuiteListener" />
+        <listener class-name="gluu.scim2.listener.SkipTestsListener" />
+    </listeners>
 
     <test name="Service Provider Configuration Endpoints Test" enabled="true">
         <!-- section 4 RFC 7644 -->

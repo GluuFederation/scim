@@ -116,7 +116,7 @@ public class AverageUserTest extends UserBaseTest {
 
     }
 
-    @Test(dependsOnMethods = "updateWithObject2", alwaysRun = true)
+    @Test(dependsOnMethods = "updateWithObject2", alwaysRun = true, groups="avgTestFinished")
     public void delete() {
         deleteUser(user);
     }
