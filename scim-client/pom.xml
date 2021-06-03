@@ -18,7 +18,7 @@
 
 	<properties>
 		<!-- Later 3.x versions ignore the registered classes annotated with @Provider :-/ -->
-        <resteasy.version>3.5.1.Final</resteasy.version>
+        <resteasy.version>4.5.7.Final</resteasy.version>
 	</properties>
     <build>
         <finalName>SCIM-Client</finalName>
