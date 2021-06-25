@@ -6,6 +6,7 @@ import org.gluu.persist.model.base.CustomObjectAttribute;
 import org.gluu.oxtrust.model.GluuGroup;
 import org.gluu.oxtrust.model.scim.ScimCustomPerson;
 import org.gluu.oxtrust.model.scim2.user.Email;
+import org.gluu.oxtrust.model.scim2.util.DateUtil;
 import org.gluu.oxtrust.service.AttributeService;
 import org.gluu.oxtrust.service.IGroupService;
 import org.gluu.oxtrust.service.IPersonService;
@@ -13,7 +14,6 @@ import org.gluu.oxtrust.util.ServiceUtil;
 import org.gluu.model.GluuAttribute;
 import org.gluu.persist.ldap.impl.LdapEntryManagerFactory;
 import org.gluu.persist.PersistenceEntryManager;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 
 import javax.annotation.PostConstruct;
@@ -79,8 +79,7 @@ public class UserPersistenceHelper {
         Date updateDate = new Date();
         person.setUpdatedAt(updateDate);
         if (person.getAttribute("oxTrustMetaLastModified") != null) {
-            person.setAttribute("oxTrustMetaLastModified",
-                    ISODateTimeFormat.dateTime().withZoneUTC().print(updateDate.getTime()));
+            person.setAttribute("oxTrustMetaLastModified", DateUtil.millisToISOString(updateDate.getTime()));
         }
         applyMultiValued(person.getTypedCustomAttributes());
         persistenceEntryManager.merge(person);

@@ -40,6 +40,7 @@ import org.gluu.oxtrust.model.scim2.SearchRequest;
 import org.gluu.oxtrust.model.scim2.patch.PatchOperation;
 import org.gluu.oxtrust.model.scim2.patch.PatchRequest;
 import org.gluu.oxtrust.model.scim2.user.UserResource;
+import org.gluu.oxtrust.model.scim2.util.DateUtil;
 import org.gluu.oxtrust.model.scim2.util.ScimResourceUtil;
 import org.gluu.oxtrust.service.filter.ProtectedApi;
 import org.gluu.oxtrust.model.scim.ScimCustomPerson;
@@ -48,7 +49,6 @@ import org.gluu.oxtrust.service.scim2.Scim2UserService;
 import org.gluu.oxtrust.service.scim2.interceptor.RefAdjusted;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
-import org.joda.time.format.ISODateTimeFormat;
 
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
@@ -308,8 +308,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             ScimResourceUtil.adjustPrimarySubAttributes(user);
 
             //Update timestamp
-            String now=ISODateTimeFormat.dateTime().withZoneUTC().print(System.currentTimeMillis());
-            user.getMeta().setLastModified(now);
+            user.getMeta().setLastModified(DateUtil.millisToISOString(System.currentTimeMillis()));
 
             //Replaces the information found in person with the contents of user
             scim2UserService.replacePersonInfo(person, user, endpointUrl);

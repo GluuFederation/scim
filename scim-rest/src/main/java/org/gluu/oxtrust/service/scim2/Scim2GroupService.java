@@ -20,6 +20,7 @@ import org.gluu.oxtrust.model.scim2.Meta;
 import org.gluu.oxtrust.model.scim2.group.GroupResource;
 import org.gluu.oxtrust.model.scim2.group.Member;
 import org.gluu.oxtrust.model.scim2.user.UserResource;
+import org.gluu.oxtrust.model.scim2.util.DateUtil;
 import org.gluu.oxtrust.model.scim2.util.ScimResourceUtil;
 import org.gluu.oxtrust.service.IGroupService;
 import org.gluu.oxtrust.service.IPersonService;
@@ -30,7 +31,6 @@ import org.gluu.persist.PersistenceEntryManager;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
 import org.gluu.search.filter.Filter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 
 /**
@@ -217,8 +217,7 @@ public class Scim2GroupService implements Serializable {
 		GroupResource tmpGroup = new GroupResource();
 		transferAttributesToGroupResource(gluuGroup, tmpGroup, groupsUrl, usersUrl);
 
-		long now = System.currentTimeMillis();
-		tmpGroup.getMeta().setLastModified(ISODateTimeFormat.dateTime().withZoneUTC().print(now));
+		tmpGroup.getMeta().setLastModified(DateUtil.millisToISOString(System.currentTimeMillis()));
 
 		tmpGroup = (GroupResource) ScimResourceUtil.transferToResourceReplace(group, tmpGroup,
 				extService.getResourceExtensions(group.getClass()));

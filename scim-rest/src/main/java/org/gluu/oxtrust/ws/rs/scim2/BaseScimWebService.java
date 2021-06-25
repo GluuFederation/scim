@@ -34,6 +34,7 @@ import org.gluu.oxtrust.model.scim2.patch.PatchRequest;
 import org.gluu.oxtrust.model.scim2.util.IntrospectUtil;
 import org.gluu.oxtrust.model.scim2.util.ResourceValidator;
 import org.gluu.oxtrust.model.scim2.util.ScimResourceUtil;
+import org.gluu.oxtrust.model.scim2.util.DateUtil;
 import org.gluu.oxtrust.service.IPersonService;
 import org.gluu.oxtrust.service.antlr.scimFilter.util.FilterUtil;
 import org.gluu.oxtrust.service.external.ExternalScimService;
@@ -42,7 +43,6 @@ import org.gluu.oxtrust.service.scim2.UserPersistenceHelper;
 import org.gluu.oxtrust.service.scim2.serialization.ListResponseJsonSerializer;
 import org.gluu.oxtrust.service.scim2.serialization.ScimResourceSerializer;
 import org.gluu.persist.model.SortOrder;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 
 /**
@@ -146,8 +146,7 @@ public class BaseScimWebService {
     protected void assignMetaInformation(BaseScimResource resource){
 
         //Generate some meta information (this replaces the info client passed in the request)
-        long now=new Date().getTime();
-        String val= ISODateTimeFormat.dateTime().withZoneUTC().print(now);
+        String val = DateUtil.millisToISOString(System.currentTimeMillis());
 
         Meta meta=new Meta();
         meta.setResourceType(ScimResourceUtil.getType(resource.getClass()));

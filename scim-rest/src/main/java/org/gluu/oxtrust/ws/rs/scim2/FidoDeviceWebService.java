@@ -55,7 +55,6 @@ import org.gluu.persist.PersistenceEntryManager;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
 import org.gluu.search.filter.Filter;
-import org.joda.time.format.ISODateTimeFormat;
 
 import com.wordnik.swagger.annotations.ApiOperation;
 
@@ -156,8 +155,7 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
             FidoDeviceResource updatedResource=new FidoDeviceResource();
             transferAttributesToFidoResource(device, updatedResource, endpointUrl, userId);
 
-            long now = System.currentTimeMillis();
-            updatedResource.getMeta().setLastModified(ISODateTimeFormat.dateTime().withZoneUTC().print(now));
+            updatedResource.getMeta().setLastModified(DateUtil.millisToISOString(System.currentTimeMillis()));
 
             updatedResource=(FidoDeviceResource) ScimResourceUtil.transferToResourceReplace(fidoDeviceResource, updatedResource, extService.getResourceExtensions(updatedResource.getClass()));
             transferAttributesToDevice(updatedResource, device);

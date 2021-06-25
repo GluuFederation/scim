@@ -39,6 +39,7 @@ import org.gluu.oxtrust.model.scim2.user.Photo;
 import org.gluu.oxtrust.model.scim2.user.Role;
 import org.gluu.oxtrust.model.scim2.user.UserResource;
 import org.gluu.oxtrust.model.scim2.user.X509Certificate;
+import org.gluu.oxtrust.model.scim2.util.DateUtil;
 import org.gluu.oxtrust.model.scim2.util.IntrospectUtil;
 import org.gluu.oxtrust.model.scim2.util.ScimResourceUtil;
 import org.gluu.oxtrust.service.IGroupService;
@@ -51,7 +52,6 @@ import org.gluu.persist.PersistenceEntryManager;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
 import org.gluu.search.filter.Filter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -277,13 +277,13 @@ public class Scim2UserService implements Serializable {
 		meta.setCreated(person.getAttribute("oxTrustMetaCreated"));
 		if (meta.getCreated() == null) {
 			Date date = person.getCreationDate();
-			meta.setCreated(date == null ? null : ISODateTimeFormat.dateTime().withZoneUTC().print(date.getTime()));
+			meta.setCreated(date == null ? null : DateUtil.millisToISOString(date.getTime()));
 		}
 
 		meta.setLastModified(person.getAttribute("oxTrustMetaLastModified"));
 		if (meta.getLastModified() == null) {
 			Date date = person.getUpdatedAt();
-			meta.setLastModified(date == null ? null : ISODateTimeFormat.dateTime().withZoneUTC().print(date.getTime()));
+			meta.setLastModified(date == null ? null : DateUtil.millisToISOString(date.getTime()));
 		}
 
 		meta.setLocation(person.getAttribute("oxTrustMetaLocation"));
@@ -501,8 +501,7 @@ public class Scim2UserService implements Serializable {
 
 		transferAttributesToUserResource(gluuPerson, tmpUser, url);
 
-		long now = System.currentTimeMillis();
-		tmpUser.getMeta().setLastModified(ISODateTimeFormat.dateTime().withZoneUTC().print(now));
+		tmpUser.getMeta().setLastModified(DateUtil.millisToISOString(System.currentTimeMillis()));
 
 		tmpUser = (UserResource) ScimResourceUtil.transferToResourceReplace(user, tmpUser,
 				extService.getResourceExtensions(user.getClass()));

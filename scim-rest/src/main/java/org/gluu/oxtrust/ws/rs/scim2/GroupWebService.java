@@ -40,6 +40,7 @@ import org.gluu.oxtrust.model.scim2.SearchRequest;
 import org.gluu.oxtrust.model.scim2.group.GroupResource;
 import org.gluu.oxtrust.model.scim2.patch.PatchOperation;
 import org.gluu.oxtrust.model.scim2.patch.PatchRequest;
+import org.gluu.oxtrust.model.scim2.util.DateUtil;
 import org.gluu.oxtrust.service.IGroupService;
 import org.gluu.oxtrust.service.filter.ProtectedApi;
 import org.gluu.oxtrust.service.scim2.Scim2GroupService;
@@ -47,7 +48,6 @@ import org.gluu.oxtrust.service.scim2.Scim2PatchService;
 import org.gluu.oxtrust.service.scim2.interceptor.RefAdjusted;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
-import org.joda.time.format.ISODateTimeFormat;
 
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
@@ -302,8 +302,7 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             executeDefaultValidation(group);
 
             //Update timestamp
-            String now=ISODateTimeFormat.dateTime().withZoneUTC().print(System.currentTimeMillis());
-            group.getMeta().setLastModified(now);
+            group.getMeta().setLastModified(DateUtil.millisToISOString(System.currentTimeMillis()));
 
             //Replaces the information found in gluuGroup with the contents of group
             scim2GroupService.replaceGroupInfo(gluuGroup, group, endpointUrl, usersUrl);
