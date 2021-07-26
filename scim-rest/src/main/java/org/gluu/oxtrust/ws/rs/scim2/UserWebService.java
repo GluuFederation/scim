@@ -35,7 +35,6 @@ import javax.ws.rs.core.Response;
 import org.gluu.oxtrust.model.exception.SCIMException;
 import org.gluu.oxtrust.model.scim2.BaseScimResource;
 import org.gluu.oxtrust.model.scim2.ErrorScimType;
-import org.gluu.oxtrust.model.scim2.ListResponse;
 import org.gluu.oxtrust.model.scim2.SearchRequest;
 import org.gluu.oxtrust.model.scim2.patch.PatchOperation;
 import org.gluu.oxtrust.model.scim2.patch.PatchRequest;
@@ -50,23 +49,13 @@ import org.gluu.oxtrust.service.scim2.interceptor.RefAdjusted;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
 
-import com.wordnik.swagger.annotations.Api;
-import com.wordnik.swagger.annotations.ApiOperation;
-import com.wordnik.swagger.annotations.ApiParam;
-import com.wordnik.swagger.annotations.Authorization;
-
 /**
  * Implementation of /Users endpoint. Methods here are intercepted and/or decorated.
  * Class org.gluu.oxtrust.service.scim2.interceptor.UserWebServiceDecorator is used to apply pre-validations on data.
  * Filter org.gluu.oxtrust.filter.AuthorizationProcessingFilter secures invocations
- *
- * @author Rahat Ali Date: 05.08.2015
- * Updated by jgomer on 2017-09-12.
  */
 @Named
 @Path("/scim/v2/Users")
-@Api(value = "/v2/Users", description = "SCIM 2.0 User Endpoint (https://tools.ietf.org/html/rfc7644#section-3.2)",
-        authorizations = {@Authorization(value = "Authorization", type = "uma")})
 public class UserWebService extends BaseScimWebService implements IUserWebService {
 
     @Inject
@@ -84,9 +73,8 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    @ApiOperation(value = "Create user", notes = "https://tools.ietf.org/html/rfc7644#section-3.3", response = UserResource.class)
     public Response createUser(
-            @ApiParam(value = "User", required = true) UserResource user,
+            UserResource user,
             @QueryParam(QUERY_PARAM_ATTRIBUTES) String attrsList,
             @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList){
 
@@ -111,8 +99,6 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    @ApiOperation(value = "Find user by id", notes = "Returns a user by id as path param (https://tools.ietf.org/html/rfc7644#section-3.4.1)",
-            response = UserResource.class)
     public Response getUserById(
             @PathParam("id") String id,
             @QueryParam(QUERY_PARAM_ATTRIBUTES) String attrsList,
@@ -153,9 +139,8 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    @ApiOperation(value = "Update user", notes = "Update user (https://tools.ietf.org/html/rfc7644#section-3.5.1)", response = UserResource.class)
     public Response updateUser(
-            @ApiParam(value = "User", required = true) UserResource user,
+            UserResource user,
             @PathParam("id") String id,
             @QueryParam(QUERY_PARAM_ATTRIBUTES) String attrsList,
             @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList) {
@@ -184,7 +169,6 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
-    @ApiOperation(value = "Delete User", notes = "Delete User (https://tools.ietf.org/html/rfc7644#section-3.6)")
     public Response deleteUser(@PathParam("id") String id){
 
         Response response;
@@ -207,7 +191,6 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    @ApiOperation(value = "Search users", notes = "Returns a list of users (https://tools.ietf.org/html/rfc7644#section-3.4.2.2)", response = ListResponse.class)
     public Response searchUsers(
             @QueryParam(QUERY_PARAM_FILTER) String filter,
             @QueryParam(QUERY_PARAM_START_INDEX) Integer startIndex,
@@ -246,8 +229,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    @ApiOperation(value = "Search users POST /.search", notes = "Returns a list of users (https://tools.ietf.org/html/rfc7644#section-3.4.3)", response = ListResponse.class)
-    public Response searchUsersPost(@ApiParam(value = "SearchRequest", required = true) SearchRequest searchRequest){
+    public Response searchUsersPost(SearchRequest searchRequest){
 
         log.debug("Executing web service method. searchUsersPost");
 
@@ -273,7 +255,6 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    @ApiOperation(value = "PATCH operation", notes = "https://tools.ietf.org/html/rfc7644#section-3.5.2", response = UserResource.class)
     public Response patchUser(
             PatchRequest request,
             @PathParam("id") String id,
