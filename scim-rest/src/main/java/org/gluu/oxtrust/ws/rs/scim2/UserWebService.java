@@ -28,7 +28,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -81,7 +80,9 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
         Response response;
         try {
             log.debug("Executing web service method. createUser");
-            scim2UserService.createUser(user, endpointUrl);
+            ScimCustomPerson person = scim2UserService.preCreateUser(user);
+            scim2UserService.createUser(person, user, endpointUrl);
+
             String json=resourceSerializer.serialize(user, attrsList, excludedAttrsList);
             response=Response.created(new URI(user.getMeta().getLocation())).entity(json).build();
         }
@@ -109,12 +110,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             log.debug("Executing web service method. getUserById");
             UserResource user = new UserResource();
             ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);  //person is not null (check associated decorator method)
-
-            if (externalScimService.isEnabled() && !externalScimService.executeScimGetUserMethods(person)) {
-                throw new WebApplicationException("Failed to execute SCIM script successfully",
-                        Response.Status.PRECONDITION_FAILED);
-            }
-            scim2UserService.transferAttributesToUserResource(person, user, endpointUrl);
+            scim2UserService.buildUserResource(person, user, endpointUrl);
 
             String json = resourceSerializer.serialize(user, attrsList, excludedAttrsList);
             response = Response.ok(new URI(user.getMeta().getLocation())).entity(json).build();
@@ -147,8 +143,10 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
 
         Response response;
         try {
-            log.debug("Executing web service method. updateUser");
-            UserResource updatedResource=scim2UserService.updateUser(id, user, endpointUrl);
+            log.debug("Executing web service method. updateUser");            
+            ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id); // This is never null (see decorator involved)
+
+            UserResource updatedResource=scim2UserService.updateUser(person, user, endpointUrl);
             String json=resourceSerializer.serialize(updatedResource, attrsList, excludedAttrsList);
             response=Response.ok(new URI(updatedResource.getMeta().getLocation())).entity(json).build();
         }
