@@ -12,6 +12,8 @@ import static org.gluu.oxtrust.model.scim2.Constants.UTF8_CHARSET_FRAGMENT;
 import static org.gluu.oxtrust.model.scim2.patch.PatchOperationType.REMOVE;
 
 import java.net.URI;
+import java.util.Collections;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -31,6 +33,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang.StringUtils;
+import org.gluu.oxtrust.model.GluuCustomPerson;
+
 import org.gluu.oxtrust.model.exception.SCIMException;
 import org.gluu.oxtrust.model.scim2.BaseScimResource;
 import org.gluu.oxtrust.model.scim2.ErrorScimType;
@@ -45,12 +50,12 @@ import org.gluu.oxtrust.model.scim.ScimCustomPerson;
 import org.gluu.oxtrust.service.scim2.Scim2PatchService;
 import org.gluu.oxtrust.service.scim2.Scim2UserService;
 import org.gluu.oxtrust.service.scim2.interceptor.RefAdjusted;
+import org.gluu.persist.exception.operation.DuplicateEntryException;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
 
 /**
- * Implementation of /Users endpoint. Methods here are intercepted and/or decorated.
- * Class org.gluu.oxtrust.service.scim2.interceptor.UserWebServiceDecorator is used to apply pre-validations on data.
+ * Implementation of /Users endpoint. Methods here are intercepted.
  * Filter org.gluu.oxtrust.filter.AuthorizationProcessingFilter secures invocations
  */
 @Named
@@ -63,9 +68,40 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @Inject
     private Scim2PatchService scim2PatchService;
 
-    /**
-     *
-     */
+    public Response validateExistenceOfUser(String id) {
+
+        Response response = null;
+        if (StringUtils.isNotEmpty(id) && personService.getPersonByInum(id) == null) {
+            log.info("Person with inum {} not found", id);
+            response = getErrorResponse(Response.Status.NOT_FOUND, 
+                    "User with id " + id + " not found");
+        }
+        return response;
+
+    }
+
+    private void checkUidExistence(String uid) throws DuplicateEntryException {
+        if (personService.getPersonByUid(uid) != null) {
+            throw new DuplicateEntryException("Duplicate UID value: " + uid);
+        }
+    }
+    
+    private void checkUidExistence(String uid, String id) throws DuplicateEntryException {
+
+        // Validate if there is an attempt to supply a userName already in use by a user other than current
+        List<GluuCustomPerson> list = null;
+        try {
+            list = personService.findPersonsByUids(Collections.singletonList(uid), new String[]{"inum"});
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        if (list != null &&
+            list.stream().filter(p -> !p.getInum().equals(id)).findAny().isPresent()) {
+            throw new DuplicateEntryException("Duplicate UID value: " + uid);
+        }
+
+    }
+
     @POST
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
@@ -75,20 +111,31 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     public Response createUser(
             UserResource user,
             @QueryParam(QUERY_PARAM_ATTRIBUTES) String attrsList,
-            @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList){
+            @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList) {
 
         Response response;
         try {
             log.debug("Executing web service method. createUser");
+
+            executeDefaultValidation(user);
+            checkUidExistence(user.getUserName());
+            assignMetaInformation(user);
+            ScimResourceUtil.adjustPrimarySubAttributes(user);
+
             ScimCustomPerson person = scim2UserService.preCreateUser(user);
             scim2UserService.createUser(person, user, endpointUrl);
 
-            String json=resourceSerializer.serialize(user, attrsList, excludedAttrsList);
-            response=Response.created(new URI(user.getMeta().getLocation())).entity(json).build();
-        }
-        catch (Exception e){
+            String json = resourceSerializer.serialize(user, attrsList, excludedAttrsList);
+            response = Response.created(new URI(user.getMeta().getLocation())).entity(json).build();
+        } catch (DuplicateEntryException e) {
+            log.error(e.getMessage());
+            response = getErrorResponse(Response.Status.CONFLICT, ErrorScimType.UNIQUENESS, e.getMessage());
+        } catch (SCIMException e) {
+            log.error("Validation check at createUser returned: {}", e.getMessage());
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_VALUE, e.getMessage());
+        } catch (Exception e) {
             log.error("Failure at createUser method", e);
-            response=getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
         }
         return response;
 
@@ -108,6 +155,10 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
         Response response;
         try {
             log.debug("Executing web service method. getUserById");
+
+            response = validateExistenceOfUser(id);
+            if (response != null) return response;
+
             UserResource user = new UserResource();
             ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);  //person is not null (check associated decorator method)
             scim2UserService.buildUserResource(person, user, endpointUrl);
@@ -143,20 +194,39 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
 
         Response response;
         try {
-            log.debug("Executing web service method. updateUser");            
-            ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id); // This is never null (see decorator involved)
+            log.debug("Executing web service method. updateUser");
 
-            UserResource updatedResource=scim2UserService.updateUser(person, user, endpointUrl);
-            String json=resourceSerializer.serialize(updatedResource, attrsList, excludedAttrsList);
-            response=Response.ok(new URI(updatedResource.getMeta().getLocation())).entity(json).build();
-        }
-        catch (InvalidAttributeValueException e){
+            //Check if the ids match in case the user coming has one
+            if (user.getId() != null && !user.getId().equals(id))
+                throw new SCIMException("Parameter id does not match with id attribute of User");
+
+            response = validateExistenceOfUser(id);
+            if (response !=null) return response;
+
+            executeValidation(user, true);
+            if (StringUtils.isNotEmpty(user.getUserName())) {
+                checkUidExistence(user.getUserName(), id);
+            }
+
+            ScimResourceUtil.adjustPrimarySubAttributes(user);            
+            ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
+
+            UserResource updatedResource = scim2UserService.updateUser(person, user, endpointUrl);
+            String json = resourceSerializer.serialize(updatedResource, attrsList, excludedAttrsList);
+            response = Response.ok(new URI(updatedResource.getMeta().getLocation())).entity(json).build();
+
+        } catch (DuplicateEntryException e) {
             log.error(e.getMessage());
-            response=getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.MUTABILITY, e.getMessage());
-        }
-        catch (Exception e){
+            response = getErrorResponse(Response.Status.CONFLICT, ErrorScimType.UNIQUENESS, e.getMessage());
+        } catch (SCIMException e) {
+            log.error("Validation check at updateUser returned: {}", e.getMessage());
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_VALUE, e.getMessage());
+        } catch (InvalidAttributeValueException e) {
+            log.error(e.getMessage());
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.MUTABILITY, e.getMessage());
+        } catch (Exception e) {
             log.error("Failure at updateUser method", e);
-            response=getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
         }
         return response;
 
@@ -167,18 +237,21 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
-    public Response deleteUser(@PathParam("id") String id){
+    public Response deleteUser(@PathParam("id") String id) {
 
         Response response;
         try {
             log.debug("Executing web service method. deleteUser");
-            ScimCustomPerson person=userPersistenceHelper.getPersonByInum(id);  //person cannot be null (check associated decorator method)
+            
+            response = validateExistenceOfUser(id);
+            if (response != null) return response;
+            
+            ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
             scim2UserService.deleteUser(person);
-            response=Response.noContent().build();
-        }
-        catch (Exception e){
+            response = Response.noContent().build();
+        } catch (Exception e) {
             log.error("Failure at deleteUser method", e);
-            response=getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
         }
         return response;
 
@@ -196,25 +269,30 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             @QueryParam(QUERY_PARAM_SORT_BY) String sortBy,
             @QueryParam(QUERY_PARAM_SORT_ORDER) String sortOrder,
             @QueryParam(QUERY_PARAM_ATTRIBUTES) String attrsList,
-            @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList){
+            @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList) {
 
         Response response;
         try {
             log.debug("Executing web service method. searchUsers");
-            sortBy=translateSortByAttribute(UserResource.class, sortBy);
+            
+            SearchRequest searchReq = new SearchRequest();
+            response = prepareSearchRequest(searchReq.getSchemas(), filter, sortBy, 
+                    sortOrder, startIndex, count, attrsList, excludedAttrsList, searchReq);
+
+            if (response != null) return response;
+            
+            sortBy = translateSortByAttribute(UserResource.class, sortBy);
             PagedResult<BaseScimResource> resources = scim2UserService.searchUsers(filter, sortBy, SortOrder.getByValue(sortOrder),
                     startIndex, count, endpointUrl, getMaxCount());
 
             String json = getListResponseSerialized(resources.getTotalEntriesCount(), startIndex, resources.getEntries(), attrsList, excludedAttrsList, count==0);
-            response=Response.ok(json).location(new URI(endpointUrl)).build();
-        }
-        catch (SCIMException e){
+            response = Response.ok(json).location(new URI(endpointUrl)).build();
+        } catch (SCIMException e) {
             log.error(e.getMessage(), e);
-            response=getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_FILTER, e.getMessage());
-        }
-        catch (Exception e){
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_FILTER, e.getMessage());
+        } catch (Exception e) {
             log.error("Failure at searchUsers method", e);
-            response=getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
         }
         return response;
 
@@ -227,19 +305,26 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    public Response searchUsersPost(SearchRequest searchRequest){
+    public Response searchUsersPost(SearchRequest searchRequest) {
 
         log.debug("Executing web service method. searchUsersPost");
+        
+        SearchRequest searchReq = new SearchRequest();
+        Response response = prepareSearchRequest(searchRequest.getSchemas(), searchRequest.getFilter(), 
+                searchRequest.getSortBy(), searchRequest.getSortOrder(), searchRequest.getStartIndex(), 
+                searchRequest.getCount(), searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr(), 
+                searchReq);
 
-        //Calling searchUsers here does not provoke that method's interceptor/decorator being called (only this one's)
-        URI uri=null;
-        Response response = searchUsers(searchRequest.getFilter(),searchRequest.getStartIndex(), searchRequest.getCount(),
+        if (response != null) return response;
+
+        //Calling searchUsers here does not provoke that method's interceptor being called (only this one's)
+        URI uri = null;
+        response = searchUsers(searchRequest.getFilter(),searchRequest.getStartIndex(), searchRequest.getCount(),
                 searchRequest.getSortBy(), searchRequest.getSortOrder(), searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr());
 
         try {
             uri = new URI(endpointUrl + "/" + SEARCH_SUFFIX);
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
         return Response.fromResponse(response).location(uri).build();
@@ -257,11 +342,18 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             PatchRequest request,
             @PathParam("id") String id,
             @QueryParam(QUERY_PARAM_ATTRIBUTES) String attrsList,
-            @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList){
+            @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList) {
 
         Response response;
         try{
             log.debug("Executing web service method. patchUser");
+            
+            response = inspectPatchRequest(request, UserResource.class);
+            if (response != null) return response;
+            
+            response = validateExistenceOfUser(id);
+            if (response != null) return response;
+            
             UserResource user=new UserResource();
             ScimCustomPerson person=userPersistenceHelper.getPersonByInum(id);  //person is not null (check associated decorator method)
 
@@ -292,19 +384,16 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             //Replaces the information found in person with the contents of user
             scim2UserService.replacePersonInfo(person, user, endpointUrl);
 
-            String json=resourceSerializer.serialize(user, attrsList, excludedAttrsList);
-            response=Response.ok(new URI(user.getMeta().getLocation())).entity(json).build();
-        }
-        catch (InvalidAttributeValueException e){
+            String json = resourceSerializer.serialize(user, attrsList, excludedAttrsList);
+            response = Response.ok(new URI(user.getMeta().getLocation())).entity(json).build();
+        } catch (InvalidAttributeValueException e) {
             log.error(e.getMessage(), e);
-            response=getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.MUTABILITY, e.getMessage());
-        }
-        catch (SCIMException e){
-            response=getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_SYNTAX, e.getMessage());
-        }
-        catch (Exception e){
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.MUTABILITY, e.getMessage());
+        } catch (SCIMException e) {
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_SYNTAX, e.getMessage());
+        } catch (Exception e) {
             log.error("Failure at patchUser method", e);
-            response=getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
         }
         return response;
 
