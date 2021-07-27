@@ -40,6 +40,7 @@ import org.gluu.oxtrust.service.IPersonService;
 import org.gluu.oxtrust.service.antlr.scimFilter.util.FilterUtil;
 import org.gluu.oxtrust.service.external.ExternalScimService;
 import org.gluu.oxtrust.service.scim2.ExtensionService;
+import org.gluu.oxtrust.service.scim2.ExternalContraintsService;
 import org.gluu.oxtrust.service.scim2.UserPersistenceHelper;
 import org.gluu.oxtrust.service.scim2.serialization.ListResponseJsonSerializer;
 import org.gluu.oxtrust.service.scim2.serialization.ScimResourceSerializer;
@@ -75,6 +76,9 @@ public class BaseScimWebService {
 
     @Inject
     ExternalScimService externalScimService;
+    
+    @Inject
+    ExternalContraintsService externalContraintsService;
 
     @Context
     HttpHeaders httpHeaders;

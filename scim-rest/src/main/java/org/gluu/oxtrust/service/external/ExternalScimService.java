@@ -1,10 +1,8 @@
 package org.gluu.oxtrust.service.external;
 
-import java.util.Collections;
 import java.util.Map;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.annotation.PostConstruct;
 
 import org.gluu.model.SimpleCustomProperty;
 import org.gluu.model.custom.script.CustomScriptType;
@@ -13,6 +11,7 @@ import org.gluu.model.custom.script.type.scim.ScimType;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.oxtrust.model.GluuGroup;
 import org.gluu.oxtrust.model.scim.ScimCustomPerson;
+import org.gluu.persist.model.base.Entry;
 import org.gluu.service.custom.script.ExternalScriptService;
 
 /**
@@ -28,6 +27,12 @@ public class ExternalScimService extends ExternalScriptService {
         super(CustomScriptType.SCIM);
     }
 
+    private CustomScriptConfiguration findConfigWithVersion(int version) {
+        return customScriptConfigurations.stream()
+                .filter(sc -> executeExternalGetApiVersion(sc) == version)
+                .findFirst().orElse(null);    
+    }
+    
     private boolean executeScimCreateUserMethod(ScimCustomPerson user, CustomScriptConfiguration customScriptConfiguration) {
 
         try {
@@ -534,6 +539,57 @@ public class ExternalScimService extends ExternalScriptService {
             }
         }
         return true;
+    }
+
+    public boolean executeAllowResourceOperation(Entry entity, OperationContext context) throws Exception {
+        
+        CustomScriptConfiguration configuration = findConfigWithVersion(5);
+        
+        if (configuration == null) {
+            // All scim operation calls pass
+            return true;
+        }
+        
+        boolean result = false;
+        try {
+            log.debug("Executing python 'SCIM Allow Resource Operation' method");
+            ScimType externalType = (ScimType) configuration.getExternalType();
+            Map<String, SimpleCustomProperty> configurationAttributes = configuration.getConfigurationAttributes();
+
+            result = externalType.allowResourceOperation(context, entity, configurationAttributes);
+            log.debug("executeAllowResourceOperation result = " + result);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            saveScriptError(configuration.getCustomScript(), e);
+            throw e;
+        }        
+        return result;
+
+    }
+
+    public String executeRejectedResourceOperationResponse(Entry entity, OperationContext context) throws Exception {
+        
+        CustomScriptConfiguration configuration = findConfigWithVersion(5);
+        if (configuration == null) {
+            // this is unexpected
+            log.error("No suitable custom script found");
+            throw new Exception("No script with API version 5 encountered");
+        }
+
+        String rejectionError = null;
+        try {
+            log.debug("Executing python 'SCIM Rejected Resource Operation Response' method");
+            ScimType externalType = (ScimType) configuration.getExternalType();
+            Map<String, SimpleCustomProperty> configurationAttributes = configuration.getConfigurationAttributes();
+
+            rejectionError = externalType.rejectedResourceOperationResponse(context, entity, configurationAttributes);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            saveScriptError(configuration.getCustomScript(), e);
+            throw e;
+        }
+        return rejectionError;
+        
     }
     
 }

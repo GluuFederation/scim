@@ -24,6 +24,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.HttpMethod;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -67,6 +68,8 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
 
     @Inject
     private Scim2PatchService scim2PatchService;
+    
+    private String userResourceType;
 
     public Response validateExistenceOfUser(String id) {
 
@@ -123,8 +126,11 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             ScimResourceUtil.adjustPrimarySubAttributes(user);
 
             ScimCustomPerson person = scim2UserService.preCreateUser(user);
-            scim2UserService.createUser(person, user, endpointUrl);
+            response = externalContraintsService.applyEntityCheck(person, httpHeaders,
+                    uriInfo, HttpMethod.POST, userResourceType);
+            if (response != null) return response;
 
+            scim2UserService.createUser(person, user, endpointUrl);
             String json = resourceSerializer.serialize(user, attrsList, excludedAttrsList);
             response = Response.created(new URI(user.getMeta().getLocation())).entity(json).build();
         } catch (DuplicateEntryException e) {
@@ -159,10 +165,13 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             response = validateExistenceOfUser(id);
             if (response != null) return response;
 
+            ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
+            response = externalContraintsService.applyEntityCheck(person, httpHeaders,
+                    uriInfo, HttpMethod.GET, userResourceType);
+            if (response != null) return response;
+            
             UserResource user = new UserResource();
-            ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);  //person is not null (check associated decorator method)
             scim2UserService.buildUserResource(person, user, endpointUrl);
-
             String json = resourceSerializer.serialize(user, attrsList, excludedAttrsList);
             response = Response.ok(new URI(user.getMeta().getLocation())).entity(json).build();
         } catch (Exception e) {
@@ -210,6 +219,9 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
 
             ScimResourceUtil.adjustPrimarySubAttributes(user);            
             ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
+            response = externalContraintsService.applyEntityCheck(person, httpHeaders,
+                    uriInfo, HttpMethod.PUT, userResourceType);
+            if (response != null) return response;
 
             UserResource updatedResource = scim2UserService.updateUser(person, user, endpointUrl);
             String json = resourceSerializer.serialize(updatedResource, attrsList, excludedAttrsList);
@@ -247,6 +259,10 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             if (response != null) return response;
             
             ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
+            response = externalContraintsService.applyEntityCheck(person, httpHeaders,
+                    uriInfo, HttpMethod.DELETE, userResourceType);
+            if (response != null) return response;
+            
             scim2UserService.deleteUser(person);
             response = Response.noContent().build();
         } catch (Exception e) {
@@ -354,9 +370,12 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             response = validateExistenceOfUser(id);
             if (response != null) return response;
             
-            UserResource user=new UserResource();
-            ScimCustomPerson person=userPersistenceHelper.getPersonByInum(id);  //person is not null (check associated decorator method)
+            ScimCustomPerson person=userPersistenceHelper.getPersonByInum(id);
+            response = externalContraintsService.applyEntityCheck(person, httpHeaders,
+                    uriInfo, HttpMethod.PATCH, userResourceType);
+            if (response != null) return response;
 
+            UserResource user=new UserResource();
             //Fill user instance with all info from person
             scim2UserService.transferAttributesToUserResource(person, user, endpointUrl);
 
@@ -368,9 +387,9 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
                     person.setOxPPID(null);
                     user.setPairwiseIdentifiers(null);
                     scim2UserService.removePPIDsBranch(person.getDn());
-                }
-                else
+                } else {
                     user = (UserResource) scim2PatchService.applyPatchOperation(user, po);
+                }
             }
 
             //Throws exception if final representation does not pass overall validation
@@ -403,6 +422,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     public void setup(){
         //Do not use getClass() here...
         init(UserWebService.class);
+        userResourceType = ScimResourceUtil.getType(UserResource.class);
     }
 
 }
