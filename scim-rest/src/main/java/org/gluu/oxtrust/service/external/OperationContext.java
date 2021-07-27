@@ -8,6 +8,7 @@ public class OperationContext {
     private String path;
     private URI baseUri;
     private String method;
+    private String resourceType;
     private MultivaluedMap<String, String> queryParams;
     private MultivaluedMap<String, String> requestHeaders;
 
@@ -49,6 +50,14 @@ public class OperationContext {
 
     public void setMethod(String method) {
         this.method = method;
+    }
+
+    public String getResourceType() {
+        return resourceType;
+    }
+
+    public void setResourceType(String resourceType) {
+        this.resourceType = resourceType;
     }
 
 }

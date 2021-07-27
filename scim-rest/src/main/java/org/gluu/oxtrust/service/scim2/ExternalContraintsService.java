@@ -23,14 +23,8 @@ public class ExternalContraintsService {
         
         Response response = null;
         if (externalScimService.isEnabled()) {
-            
-            OperationContext ctx = new OperationContext();
-            ctx.setBaseUri(uriInfo.getBaseUri());
-            ctx.setMethod(httpMethod);
-            ctx.setPath(uriInfo.getPath());
-            ctx.setQueryParams(uriInfo.getQueryParameters());
-            ctx.setRequestHeaders(httpHeaders.getRequestHeaders());
-            
+            OperationContext ctx = makeContext(httpHeaders, uriInfo, httpMethod, resourceType);
+
             if (!externalScimService.executeAllowResourceOperation(entity, ctx)) {
                 String error = externalScimService.executeRejectedResourceOperationResponse(entity, ctx);
                 response = BaseScimWebService.getErrorResponse(Status.FORBIDDEN, error);
@@ -38,6 +32,20 @@ public class ExternalContraintsService {
         }
         return response;
         
+    }
+    
+    private OperationContext makeContext(HttpHeaders httpHeaders, UriInfo uriInfo,
+            String httpMethod, String resourceType) {
+
+            OperationContext ctx = new OperationContext();
+            ctx.setBaseUri(uriInfo.getBaseUri());
+            ctx.setMethod(httpMethod);
+            ctx.setResourceType(resourceType);
+            ctx.setPath(uriInfo.getPath());
+            ctx.setQueryParams(uriInfo.getQueryParameters());
+            ctx.setRequestHeaders(httpHeaders.getRequestHeaders());
+            
+            return ctx;
     }
     
 }
