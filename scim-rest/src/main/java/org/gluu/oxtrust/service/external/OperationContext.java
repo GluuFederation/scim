@@ -11,6 +11,7 @@ public class OperationContext {
     private String resourceType;
     private MultivaluedMap<String, String> queryParams;
     private MultivaluedMap<String, String> requestHeaders;
+    private String accessToken;
 
     public String getPath() {
         return path;
@@ -58,6 +59,14 @@ public class OperationContext {
 
     public void setResourceType(String resourceType) {
         this.resourceType = resourceType;
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
     }
 
 }
