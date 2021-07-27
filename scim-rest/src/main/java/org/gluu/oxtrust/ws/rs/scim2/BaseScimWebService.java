@@ -6,13 +6,14 @@ import static org.gluu.oxtrust.model.scim2.Constants.SEARCH_REQUEST_SCHEMA_ID;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.Date;
 import java.util.List;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.Path;
 
 import com.fasterxml.jackson.core.Version;
@@ -74,6 +75,12 @@ public class BaseScimWebService {
 
     @Inject
     ExternalScimService externalScimService;
+
+    @Context
+    HttpHeaders httpHeaders;
+
+    @Context
+    UriInfo uriInfo;
 
     public static final String SEARCH_SUFFIX = ".search";
     
