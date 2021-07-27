@@ -171,7 +171,7 @@ public class GroupWebServiceDecorator extends BaseScimWebService implements IGro
 			String attrsList, String excludedAttrsList) {
 
 		SearchRequest searchReq = new SearchRequest();
-		Response response = prepareSearchRequest(searchReq.getSchemas(), filter, sortBy, sortOrder, startIndex, count,
+		Response response = prepareSearchRequest(searchReq.getSchemas(), filter, null, sortBy, sortOrder, startIndex, count,
 				attrsList, excludedAttrsList, searchReq);
 
 		if (response == null) {
@@ -186,7 +186,7 @@ public class GroupWebServiceDecorator extends BaseScimWebService implements IGro
 	public Response searchGroupsPost(SearchRequest searchRequest) {
 
 		SearchRequest searchReq = new SearchRequest();
-		Response response = prepareSearchRequest(searchRequest.getSchemas(), searchRequest.getFilter(),
+		Response response = prepareSearchRequest(searchRequest.getSchemas(), searchRequest.getFilter(), null,
 				searchRequest.getSortBy(), searchRequest.getSortOrder(), searchRequest.getStartIndex(),
 				searchRequest.getCount(), searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr(),
 				searchReq);

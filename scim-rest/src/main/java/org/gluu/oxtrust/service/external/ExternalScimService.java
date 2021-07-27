@@ -33,6 +33,11 @@ public class ExternalScimService extends ExternalScriptService {
                 .findFirst().orElse(null);    
     }
     
+    private void logAndSave(CustomScriptConfiguration customScriptConfiguration, Exception e) {
+        log.error(e.getMessage(), e);
+        saveScriptError(customScriptConfiguration.getCustomScript(), e);        
+    }
+    
     private boolean executeScimCreateUserMethod(ScimCustomPerson user, CustomScriptConfiguration customScriptConfiguration) {
 
         try {
@@ -45,8 +50,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -67,8 +71,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -86,8 +89,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -108,8 +110,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -127,8 +128,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -149,8 +149,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -171,8 +170,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -190,8 +188,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -212,8 +209,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -231,8 +227,7 @@ public class ExternalScimService extends ExternalScriptService {
             return  result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -253,8 +248,7 @@ public class ExternalScimService extends ExternalScriptService {
             return  result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -272,8 +266,7 @@ public class ExternalScimService extends ExternalScriptService {
             return  result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -294,8 +287,7 @@ public class ExternalScimService extends ExternalScriptService {
             return  result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -316,8 +308,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -338,8 +329,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
         
@@ -360,8 +350,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
             
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
         
@@ -559,8 +548,7 @@ public class ExternalScimService extends ExternalScriptService {
             result = externalType.allowResourceOperation(context, entity, configurationAttributes);
             log.debug("executeAllowResourceOperation result = " + result);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(configuration.getCustomScript(), e);
+            logAndSave(configuration, e);
             throw e;
         }        
         return result;
@@ -583,9 +571,58 @@ public class ExternalScimService extends ExternalScriptService {
             Map<String, SimpleCustomProperty> configurationAttributes = configuration.getConfigurationAttributes();
 
             rejectionError = externalType.rejectedResourceOperationResponse(context, entity, configurationAttributes);
+            log.debug("executeRejectedResourceOperationResponse result = " + rejectionError);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(configuration.getCustomScript(), e);
+            logAndSave(configuration, e);
+            throw e;
+        }
+        return rejectionError;
+        
+    }
+    
+    public String executeAllowSearchOperation(OperationContext context) throws Exception {
+        CustomScriptConfiguration configuration = findConfigWithVersion(5);
+        
+        if (configuration == null) {
+            // All scim operation calls pass
+            return "";
+        }
+
+        String result = null;
+        try {
+            log.debug("Executing python 'SCIM Allow Search Operation' method");
+            ScimType externalType = (ScimType) configuration.getExternalType();
+            Map<String, SimpleCustomProperty> configurationAttributes = configuration.getConfigurationAttributes();
+
+            result = externalType.allowSearchOperation(context, configurationAttributes);
+            log.debug("executeAllowSearchOperation result = " + result);
+        } catch (Exception e) {
+            logAndSave(configuration, e);
+            throw e;
+        }        
+        return result;
+        
+    }
+
+    public String executeRejectedSearchOperationResponse(OperationContext context) throws Exception {
+        
+        CustomScriptConfiguration configuration = findConfigWithVersion(5);
+        if (configuration == null) {
+            // this is unexpected
+            log.error("No suitable custom script found");
+            throw new Exception("No script with API version 5 encountered");
+        }
+
+        String rejectionError = null;
+        try {
+            log.debug("Executing python 'SCIM Rejected Search Operation Response' method");
+            ScimType externalType = (ScimType) configuration.getExternalType();
+            Map<String, SimpleCustomProperty> configurationAttributes = configuration.getConfigurationAttributes();
+
+            rejectionError = externalType.rejectedSearchOperationResponse(context, configurationAttributes);
+            log.debug("executeRejectedSearchOperationResponse result = " + rejectionError);
+        } catch (Exception e) {
+            logAndSave(configuration, e);
             throw e;
         }
         return rejectionError;

@@ -54,6 +54,7 @@ import org.gluu.oxtrust.service.scim2.interceptor.RefAdjusted;
 import org.gluu.persist.exception.operation.DuplicateEntryException;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
+import org.gluu.util.Pair;
 
 /**
  * Implementation of /Users endpoint. Methods here are intercepted.
@@ -291,8 +292,12 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
         try {
             log.debug("Executing web service method. searchUsers");
             
+            Pair<String, Response> checkOutput = externalContraintsService.applySearchCheck(httpHeaders,
+                    uriInfo, HttpMethod.GET, userResourceType);
+            if (checkOutput.getSecond() != null) return checkOutput.getSecond();
+            
             SearchRequest searchReq = new SearchRequest();
-            response = prepareSearchRequest(searchReq.getSchemas(), filter, sortBy, 
+            response = prepareSearchRequest(searchReq.getSchemas(), filter, checkOutput.getFirst(), sortBy, 
                     sortOrder, startIndex, count, attrsList, excludedAttrsList, searchReq);
 
             if (response != null) return response;
@@ -323,27 +328,33 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @RefAdjusted
     public Response searchUsersPost(SearchRequest searchRequest) {
 
-        log.debug("Executing web service method. searchUsersPost");
-        
-        SearchRequest searchReq = new SearchRequest();
-        Response response = prepareSearchRequest(searchRequest.getSchemas(), searchRequest.getFilter(), 
-                searchRequest.getSortBy(), searchRequest.getSortOrder(), searchRequest.getStartIndex(), 
-                searchRequest.getCount(), searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr(), 
-                searchReq);
-
-        if (response != null) return response;
-
-        //Calling searchUsers here does not provoke that method's interceptor being called (only this one's)
-        URI uri = null;
-        response = searchUsers(searchRequest.getFilter(),searchRequest.getStartIndex(), searchRequest.getCount(),
-                searchRequest.getSortBy(), searchRequest.getSortOrder(), searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr());
-
+        Response response;
         try {
-            uri = new URI(endpointUrl + "/" + SEARCH_SUFFIX);
+            log.debug("Executing web service method. searchUsersPost");
+            
+            Pair<String, Response> checkOutput = externalContraintsService.applySearchCheck(httpHeaders,
+                    uriInfo, HttpMethod.GET, userResourceType);
+            if (checkOutput.getSecond() != null) return checkOutput.getSecond();
+
+            SearchRequest searchReq = new SearchRequest();
+            response = prepareSearchRequest(searchRequest.getSchemas(), searchRequest.getFilter(), checkOutput.getFirst(),
+                    searchRequest.getSortBy(), searchRequest.getSortOrder(), searchRequest.getStartIndex(), 
+                    searchRequest.getCount(), searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr(), 
+                    searchReq);
+
+            if (response != null) return response;
+
+            URI uri = new URI(endpointUrl + "/" + SEARCH_SUFFIX);
+            //Calling searchUsers here does not provoke that method's interceptor being called (only this one's)
+            response = searchUsers(searchRequest.getFilter(), searchRequest.getStartIndex(), searchRequest.getCount(),
+                    searchRequest.getSortBy(), searchRequest.getSortOrder(), searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr());
+
+            response = Response.fromResponse(response).location(uri).build();
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error("Failure at searchUsersPost method", e);
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
         }
-        return Response.fromResponse(response).location(uri).build();
+        return response;
 
     }
 

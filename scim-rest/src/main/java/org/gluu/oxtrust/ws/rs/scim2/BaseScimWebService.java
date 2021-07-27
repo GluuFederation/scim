@@ -217,23 +217,34 @@ public class BaseScimWebService {
 
     }
 
-    protected Response prepareSearchRequest(List<String> schemas, String filter, String sortBy, String sortOrder, Integer startIndex,
-                                            Integer count, String attrsList, String excludedAttrsList, SearchRequest request){
+    protected Response prepareSearchRequest(List<String> schemas, String filter,
+            String filterPrepend, String sortBy, String sortOrder, Integer startIndex,
+            Integer count, String attrsList, String excludedAttrsList, SearchRequest request) {
 
-        Response response=null;
+        Response response = null;
 
-        if (schemas!=null && schemas.size()==1 && schemas.get(0).equals(SEARCH_REQUEST_SCHEMA_ID)) {
+        if (schemas != null && schemas.size() == 1 && schemas.get(0).equals(SEARCH_REQUEST_SCHEMA_ID)) {
+
             count = count == null ? getMaxCount() : count;
             //Per spec, a negative value SHALL be interpreted as "0" for count
-            if (count<0)
-                count=0;
+            if (count < 0) {
+                count = 0;
+            }
 
             if (count <= getMaxCount()) {
                 //SCIM searches are 1 indexed
                 startIndex = (startIndex == null || startIndex < 1) ? 1 : startIndex;
 
-                if (StringUtils.isEmpty(sortOrder) || !sortOrder.equals(SortOrder.DESCENDING.getValue()))
+                if (StringUtils.isEmpty(sortOrder) || !sortOrder.equals(SortOrder.DESCENDING.getValue())) {
                     sortOrder = SortOrder.ASCENDING.getValue();
+                }
+                if (!StringUtils.isEmpty(filterPrepend)) {
+                    if (StringUtils.isEmpty(filter)) {
+                        filter = filterPrepend;
+                    } else {
+                        filter = String.format("%s and (%s)", filterPrepend, filter);
+                    }
+                }
 
                 request.setSchemas(schemas);
                 request.setAttributes(attrsList);
@@ -243,13 +254,12 @@ public class BaseScimWebService {
                 request.setSortOrder(sortOrder);
                 request.setStartIndex(startIndex);
                 request.setCount(count);
-            }
-            else
+            } else {
                 response = getErrorResponse(BAD_REQUEST, ErrorScimType.TOO_MANY, "Maximum number of results per page is " + getMaxCount());
-        }
-        else
+            }
+        } else {
             response = getErrorResponse(BAD_REQUEST, ErrorScimType.INVALID_SYNTAX, "Wrong schema(s) supplied in Search Request");
-
+        }
         return response;
 
     }

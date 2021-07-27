@@ -102,7 +102,7 @@ public abstract class FidoDeviceWebServiceDecorator extends BaseScimWebService i
                                   String sortOrder, String attrsList, String excludedAttrsList) {
 
         SearchRequest searchReq=new SearchRequest();
-        Response response=prepareSearchRequest(searchReq.getSchemas(), filter, sortBy, sortOrder, startIndex, count,
+        Response response=prepareSearchRequest(searchReq.getSchemas(), filter, null, sortBy, sortOrder, startIndex, count,
                                 attrsList, excludedAttrsList, searchReq);
 
         if (response == null) {
@@ -119,7 +119,7 @@ public abstract class FidoDeviceWebServiceDecorator extends BaseScimWebService i
     public Response searchDevicesPost(SearchRequest searchRequest, String userId) {
 
         SearchRequest searchReq = new SearchRequest();
-        Response response = prepareSearchRequest(searchRequest.getSchemas(), searchRequest.getFilter(), searchRequest.getSortBy(),
+        Response response = prepareSearchRequest(searchRequest.getSchemas(), searchRequest.getFilter(), null, searchRequest.getSortBy(),
                                 searchRequest.getSortOrder(), searchRequest.getStartIndex(), searchRequest.getCount(),
                                 searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr(), searchReq);
 

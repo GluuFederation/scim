@@ -77,7 +77,7 @@ public class SearchResourcesWebService extends BaseScimWebService {
     public Response search(@ApiParam(value = "SearchRequest", required = true) SearchRequest searchRequest) {
 
         SearchRequest searchReq = new SearchRequest();
-        Response response = prepareSearchRequest(searchRequest.getSchemas(), searchRequest.getFilter(), searchRequest.getSortBy(),
+        Response response = prepareSearchRequest(searchRequest.getSchemas(), searchRequest.getFilter(), null, searchRequest.getSortBy(),
                 searchRequest.getSortOrder(), searchRequest.getStartIndex(), searchRequest.getCount(),
                 searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr(), searchReq);
 
