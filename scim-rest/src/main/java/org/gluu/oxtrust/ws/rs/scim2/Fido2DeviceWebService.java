@@ -34,8 +34,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.wordnik.swagger.annotations.ApiOperation;
-
 import org.apache.commons.lang.StringUtils;
 
 import org.gluu.oxtrust.model.exception.SCIMException;
@@ -58,8 +56,6 @@ import org.gluu.search.filter.Filter;
  * Implementation of /Fido2Devices endpoint. Methods here are intercepted and/or decorated.
  * Class org.gluu.oxtrust.service.scim2.interceptor.Fido2DeviceWebServiceDecorator is used to apply pre-validations on data.
  * Filter org.gluu.oxtrust.ws.rs.scim2.AuthorizationProcessingFilter secures invocations
- *
- * @author jgomer
  */
 @Named("scim2Fido2DeviceEndpoint")
 @Path("/scim/v2/Fido2Devices")
@@ -79,7 +75,6 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
-    @ApiOperation(value = "Create device", response = Fido2DeviceResource.class)
     public Response createDevice() {
         log.debug("Executing web service method. createDevice");
         return getErrorResponse(Response.Status.NOT_IMPLEMENTED, "Not implemented; device registration only happens via the FIDO 2.0 API.");
@@ -91,7 +86,6 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    @ApiOperation(value = "Find device by id", notes = "Returns a device by id as path param", response = Fido2DeviceResource.class)
     public Response getF2DeviceById(@PathParam("id") String id,
                                   @QueryParam("userId") String userId,
                                   @QueryParam(QUERY_PARAM_ATTRIBUTES) String attrsList,
@@ -129,7 +123,6 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    @ApiOperation(value = "Update device", response = Fido2DeviceResource.class)
     public Response updateF2Device(
             Fido2DeviceResource fidoDeviceResource,
             @PathParam("id") String id,
@@ -180,7 +173,6 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
-    @ApiOperation(value = "Delete device")
     public Response deleteF2Device(@PathParam("id") String id) {
 
         Response response;
@@ -209,7 +201,6 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    @ApiOperation(value = "Search devices", notes = "Returns a list of devices", response = ListResponse.class)
     public Response searchF2Devices(
             @QueryParam("userId") String userId,
             @QueryParam(QUERY_PARAM_FILTER) String filter,
@@ -248,7 +239,6 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    @ApiOperation(value = "Search devices POST /.search", notes = "Returns a list of fido devices", response = ListResponse.class)
     public Response searchF2DevicesPost(SearchRequest searchRequest, @QueryParam("userId") String userId) {
 
         log.debug("Executing web service method. searchDevicesPost");
@@ -347,7 +337,6 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    @ApiOperation(value = "PATCH operation", notes = "https://tools.ietf.org/html/rfc7644#section-3.5.2", response = Fido2DeviceResource.class)
     public Response patchF2Device(
             PatchRequest request,
             @PathParam("id") String id,

@@ -20,10 +20,6 @@ import org.gluu.oxtrust.model.scim2.provider.config.ServiceProviderConfig;
 import org.gluu.oxtrust.model.scim2.util.ScimResourceUtil;
 import org.gluu.oxtrust.service.scim2.interceptor.RejectFilterParam;
 
-/**
- * @author Rahat Ali Date: 05.08.2015
- * Updated by jgomer2001 on 2017-09-23
- */
 @Named("serviceProviderConfig")
 @Path("/scim/v2/ServiceProviderConfig")
 public class ServiceProviderConfigWS extends BaseScimWebService {

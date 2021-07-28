@@ -32,15 +32,12 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.wordnik.swagger.annotations.ApiOperation;
-
 import org.apache.commons.lang.StringUtils;
 
 import org.gluu.oxtrust.model.exception.SCIMException;
 import org.gluu.oxtrust.model.fido.GluuCustomFidoDevice;
 import org.gluu.oxtrust.model.scim2.BaseScimResource;
 import org.gluu.oxtrust.model.scim2.ErrorScimType;
-import org.gluu.oxtrust.model.scim2.ListResponse;
 import org.gluu.oxtrust.model.scim2.Meta;
 import org.gluu.oxtrust.model.scim2.SearchRequest;
 import org.gluu.oxtrust.model.scim2.fido.FidoDeviceResource;
@@ -56,15 +53,10 @@ import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
 import org.gluu.search.filter.Filter;
 
-import com.wordnik.swagger.annotations.ApiOperation;
-
 /**
  * Implementation of /FidoDevices endpoint. Methods here are intercepted and/or decorated.
  * Class org.gluu.oxtrust.service.scim2.interceptor.FidoDeviceWebServiceDecorator is used to apply pre-validations on data.
  * Filter org.gluu.oxtrust.ws.rs.scim2.AuthorizationProcessingFilter secures invocations
- *
- * @author Val Pecaoco
- * Updated by jgomer on 2017-10-09.
  */
 @Named("scim2FidoDeviceEndpoint")
 @Path("/scim/v2/FidoDevices")
@@ -86,7 +78,6 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
-    @ApiOperation(value = "Create device", response = FidoDeviceResource.class)
     public Response createDevice() {
         log.debug("Executing web service method. createDevice");
         return getErrorResponse(Response.Status.NOT_IMPLEMENTED, "Not implemented; device registration only happens via the FIDO API.");
@@ -98,7 +89,6 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    @ApiOperation(value = "Find device by id", notes = "Returns a device by id as path param", response = FidoDeviceResource.class)
     public Response getDeviceById(@PathParam("id") String id,
                            @QueryParam("userId") String userId,
                            @QueryParam(QUERY_PARAM_ATTRIBUTES) String attrsList,
@@ -136,7 +126,6 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    @ApiOperation(value = "Update device", response = FidoDeviceResource.class)
     public Response updateDevice(
             FidoDeviceResource fidoDeviceResource,
             @PathParam("id") String id,
@@ -186,7 +175,6 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
-    @ApiOperation(value = "Delete device")
     public Response deleteDevice(@PathParam("id") String id) {
 
         Response response;
@@ -215,7 +203,6 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    @ApiOperation(value = "Search devices", notes = "Returns a list of devices", response = ListResponse.class)
     public Response searchDevices(
             @QueryParam("userId") String userId,
             @QueryParam(QUERY_PARAM_FILTER) String filter,
@@ -254,7 +241,6 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    @ApiOperation(value = "Search devices POST /.search", notes = "Returns a list of fido devices", response = ListResponse.class)
     public Response searchDevicesPost(SearchRequest searchRequest, @QueryParam("userId") String userId) {
 
         log.debug("Executing web service method. searchDevicesPost");
@@ -390,7 +376,6 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    @ApiOperation(value = "PATCH operation", notes = "https://tools.ietf.org/html/rfc7644#section-3.5.2", response = FidoDeviceResource.class)
     public Response patchDevice(
             PatchRequest request,
             @PathParam("id") String id,
