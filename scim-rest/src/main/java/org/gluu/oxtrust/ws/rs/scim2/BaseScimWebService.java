@@ -38,7 +38,6 @@ import org.gluu.oxtrust.model.scim2.util.ScimResourceUtil;
 import org.gluu.oxtrust.model.scim2.util.DateUtil;
 import org.gluu.oxtrust.service.IPersonService;
 import org.gluu.oxtrust.service.antlr.scimFilter.util.FilterUtil;
-import org.gluu.oxtrust.service.external.ExternalScimService;
 import org.gluu.oxtrust.service.scim2.ExtensionService;
 import org.gluu.oxtrust.service.scim2.ExternalContraintsService;
 import org.gluu.oxtrust.service.scim2.UserPersistenceHelper;
@@ -73,9 +72,6 @@ public class BaseScimWebService {
 
     @Inject
     UserPersistenceHelper userPersistenceHelper;
-
-    @Inject
-    ExternalScimService externalScimService;
     
     @Inject
     ExternalContraintsService externalContraintsService;

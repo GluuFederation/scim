@@ -27,7 +27,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -68,6 +67,8 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
 
     @Inject
     private Scim2PatchService scim2PatchService;
+    
+    private String usersUrl;
 
     @POST
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
@@ -83,7 +84,9 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
         Response response;
         try {
             log.debug("Executing web service method. createGroup");
-            scim2GroupService.createGroup(group, endpointUrl, userWebService.getEndpointUrl());
+            GluuGroup gluuGroup = scim2GroupService.preCreateGroup(group, usersUrl);
+            scim2GroupService.createGroup(gluuGroup, group, endpointUrl, usersUrl);
+            
             String json=resourceSerializer.serialize(group, attrsList, excludedAttrsList);
             response=Response.created(new URI(group.getMeta().getLocation())).entity(json).build();
         }
@@ -109,14 +112,8 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
         Response response;
         try {
             log.debug("Executing web service method. getGroupById");
-            GroupResource group = new GroupResource();
-            GluuGroup gluuGroup = groupService.getGroupByInum(id);  //gluuGroup is not null (check associated decorator method)
-
-            if (externalScimService.isEnabled() && !externalScimService.executeScimGetGroupMethods(gluuGroup)) {
-                throw new WebApplicationException("Failed to execute SCIM script successfully",
-                        Response.Status.PRECONDITION_FAILED);
-            }
-            scim2GroupService.transferAttributesToGroupResource(gluuGroup, group, endpointUrl, userWebService.getEndpointUrl());
+            GluuGroup gluuGroup = groupService.getGroupByInum(id);  //gluuGroup is not null (check associated decorator method)            
+            GroupResource group = scim2GroupService.buildGroupResource(gluuGroup, endpointUrl, usersUrl);
 
             String json = resourceSerializer.serialize(group, attrsList, excludedAttrsList);
             response = Response.ok(new URI(group.getMeta().getLocation())).entity(json).build();
@@ -150,7 +147,8 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
         Response response;
         try {
             log.debug("Executing web service method. updateGroup");
-            GroupResource updatedResource=scim2GroupService.updateGroup(id, group, endpointUrl, userWebService.getEndpointUrl());
+            GluuGroup gluuGroup = groupService.getGroupByInum(id);
+            GroupResource updatedResource=scim2GroupService.updateGroup(gluuGroup, group, endpointUrl, usersUrl);
             String json=resourceSerializer.serialize(updatedResource, attrsList, excludedAttrsList);
             response=Response.ok(new URI(updatedResource.getMeta().getLocation())).entity(json).build();
         }
@@ -207,7 +205,7 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             log.debug("Executing web service method. searchGroups");
             sortBy=translateSortByAttribute(GroupResource.class, sortBy);
             PagedResult<BaseScimResource> resources = scim2GroupService.searchGroups(filter, sortBy, SortOrder.getByValue(sortOrder),
-                    startIndex, count, endpointUrl, userWebService.getEndpointUrl(), getMaxCount());
+                    startIndex, count, endpointUrl, usersUrl, getMaxCount());
 
             String json = getListResponseSerialized(resources.getTotalEntriesCount(), startIndex, resources.getEntries(), attrsList, excludedAttrsList, count==0);
             response=Response.ok(json).location(new URI(endpointUrl)).build();
@@ -267,7 +265,6 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
         try{
             log.debug("Executing web service method. patchGroup");
 
-            String usersUrl=userWebService.getEndpointUrl();
             GroupResource group=new GroupResource();
             GluuGroup gluuGroup=groupService.getGroupByInum(id);  //group is not null (check associated decorator method)
 
@@ -310,6 +307,7 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     public void setup(){
         //Do not use getClass() here...
         init(GroupWebService.class);
+        usersUrl = userWebService.getEndpointUrl();
     }
 
 }
