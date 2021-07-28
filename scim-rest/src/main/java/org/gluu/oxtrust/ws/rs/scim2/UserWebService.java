@@ -72,17 +72,10 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     private Scim2PatchService scim2PatchService;
     
     private String userResourceType;
-    
-    public Response validateExistenceOfUser(String id) {
 
-        Response response = null;
-        if (StringUtils.isNotEmpty(id) && personService.getPersonByInum(id) == null) {
-            log.info("Person with inum {} not found", id);
-            response = getErrorResponse(Response.Status.NOT_FOUND, 
-                    "User with id " + id + " not found");
-        }
-        return response;
-
+    private Response notFoundResponse(String id) {
+        return getErrorResponse(Response.Status.NOT_FOUND,
+                "User with id " + id + " not found");
     }
 
     private void checkUidExistence(String uid) throws DuplicateEntryException {
@@ -202,10 +195,9 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
         try {
             log.debug("Executing web service method. getUserById");
 
-            response = validateExistenceOfUser(id);
-            if (response != null) return response;
-
             ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
+            if (person == null) return notFoundResponse(id);
+            
             response = externalContraintsService.applyEntityCheck(person, httpHeaders,
                     uriInfo, HttpMethod.GET, userResourceType);
             if (response != null) return response;
@@ -249,20 +241,19 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             if (user.getId() != null && !user.getId().equals(id))
                 throw new SCIMException("Parameter id does not match with id attribute of User");
 
-            response = validateExistenceOfUser(id);
-            if (response !=null) return response;
+            ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
+            if (person == null) return notFoundResponse(id);
+
+            response = externalContraintsService.applyEntityCheck(person, httpHeaders,
+                    uriInfo, HttpMethod.PUT, userResourceType);
+            if (response != null) return response;
 
             executeValidation(user, true);
             if (StringUtils.isNotEmpty(user.getUserName())) {
                 checkUidExistence(user.getUserName(), id);
             }
 
-            ScimResourceUtil.adjustPrimarySubAttributes(user);            
-            ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
-            response = externalContraintsService.applyEntityCheck(person, httpHeaders,
-                    uriInfo, HttpMethod.PUT, userResourceType);
-            if (response != null) return response;
-
+            ScimResourceUtil.adjustPrimarySubAttributes(user);
             UserResource updatedResource = scim2UserService.updateUser(person, user, endpointUrl);
             String json = resourceSerializer.serialize(updatedResource, attrsList, excludedAttrsList);
             response = Response.ok(new URI(updatedResource.getMeta().getLocation())).entity(json).build();
@@ -294,11 +285,10 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
         Response response;
         try {
             log.debug("Executing web service method. deleteUser");
-            
-            response = validateExistenceOfUser(id);
-            if (response != null) return response;
-            
+
             ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
+            if (person == null) return notFoundResponse(id);
+
             response = externalContraintsService.applyEntityCheck(person, httpHeaders,
                     uriInfo, HttpMethod.DELETE, userResourceType);
             if (response != null) return response;
@@ -377,10 +367,9 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             response = inspectPatchRequest(request, UserResource.class);
             if (response != null) return response;
             
-            response = validateExistenceOfUser(id);
-            if (response != null) return response;
-            
-            ScimCustomPerson person=userPersistenceHelper.getPersonByInum(id);
+            ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
+            if (person == null) return notFoundResponse(id);
+
             response = externalContraintsService.applyEntityCheck(person, httpHeaders,
                     uriInfo, HttpMethod.PATCH, userResourceType);
             if (response != null) return response;
