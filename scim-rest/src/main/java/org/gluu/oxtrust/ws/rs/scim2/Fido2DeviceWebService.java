@@ -53,8 +53,7 @@ import org.gluu.persist.model.SortOrder;
 import org.gluu.search.filter.Filter;
 
 /**
- * Implementation of /Fido2Devices endpoint. Methods here are intercepted and/or decorated.
- * Class org.gluu.oxtrust.service.scim2.interceptor.Fido2DeviceWebServiceDecorator is used to apply pre-validations on data.
+ * Implementation of /Fido2Devices endpoint. Methods here are intercepted.
  * Filter org.gluu.oxtrust.ws.rs.scim2.AuthorizationProcessingFilter secures invocations
  */
 @Named("scim2Fido2DeviceEndpoint")
@@ -70,6 +69,22 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
     @Inject
     private PersistenceEntryManager entryManager;
 
+
+    private Response validateExistenceOfDevice(String userId, String id) {
+        
+        //userId can be null here
+        Response response = null;
+
+        GluuFido2Device device = StringUtils.isEmpty(id) ? null : fidoDeviceService.getFido2DeviceById(userId, id);
+        if (device == null) {
+            log.info("Device with id {} not found", id);
+            response = getErrorResponse(Response.Status.NOT_FOUND, ErrorScimType.INVALID_VALUE, 
+                    "Resource " + id + " not found");
+        }
+        return response;
+
+    }
+    
     @POST
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
@@ -89,28 +104,29 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
     public Response getF2DeviceById(@PathParam("id") String id,
                                   @QueryParam("userId") String userId,
                                   @QueryParam(QUERY_PARAM_ATTRIBUTES) String attrsList,
-                                  @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList){
+                                  @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList) {
 
         Response response;
         try{
             log.debug("Executing web service method. getF2DeviceById");
-            Fido2DeviceResource fidoResource=new Fido2DeviceResource();
+            
+            response = validateExistenceOfDevice(userId, id);
+            if (response != null) return response;
+            
+            Fido2DeviceResource fidoResource = new Fido2DeviceResource();
 
-            GluuFido2Device device=fidoDeviceService.getFido2DeviceById(userId, id);
-            //device cannot be null (see Fido2DeviceWebServiceDecorator)
+            GluuFido2Device device = fidoDeviceService.getFido2DeviceById(userId, id);
 
             transferAttributesToFido2Resource(device, fidoResource, endpointUrl, getUserInumFromDN(device.getDn()));
 
-            String json=resourceSerializer.serialize(fidoResource, attrsList, excludedAttrsList);
-            response=Response.ok(new URI(fidoResource.getMeta().getLocation())).entity(json).build();
-        }
-        catch (SCIMException e){
+            String json = resourceSerializer.serialize(fidoResource, attrsList, excludedAttrsList);
+            response = Response.ok(new URI(fidoResource.getMeta().getLocation())).entity(json).build();
+        } catch (SCIMException e) {
             log.error(e.getMessage());
-            response=getErrorResponse(Response.Status.NOT_FOUND, ErrorScimType.INVALID_VALUE, e.getMessage());
-        }
-        catch (Exception e){
+            response = getErrorResponse(Response.Status.NOT_FOUND, ErrorScimType.INVALID_VALUE, e.getMessage());
+        } catch (Exception e) {
             log.error("Failure at getF2DeviceById method", e);
-            response=getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
         }
         return response;
 
@@ -133,28 +149,40 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
         try {
             log.debug("Executing web service method. updateDevice");
 
-            String userId=fidoDeviceResource.getUserId();
+            //remove externalId, no place to store it in LDAP
+            fidoDeviceResource.setExternalId(null);
+
+            if (fidoDeviceResource.getId() != null && !fidoDeviceResource.getId().equals(id))
+                throw new SCIMException("Parameter id does not match id attribute of Device");
+
+            response = validateExistenceOfDevice(fidoDeviceResource.getUserId(), id);
+
+            if (response != null) return response;
+            
+            executeValidation(fidoDeviceResource, true);
+                
+            String userId = fidoDeviceResource.getUserId();
             GluuFido2Device device = fidoDeviceService.getFido2DeviceById(userId, id);
             if (device == null)
-                throw new SCIMException("Resource " + id + " not found");
+                return getErrorResponse(Response.Status.NOT_FOUND, ErrorScimType.INVALID_VALUE, 
+                        "Resource " + id + " not found");
 
-            Fido2DeviceResource updatedResource=new Fido2DeviceResource();
+            Fido2DeviceResource updatedResource = new Fido2DeviceResource();
             transferAttributesToFido2Resource(device, updatedResource, endpointUrl, userId);
 
             updatedResource.getMeta().setLastModified(DateUtil.millisToISOString(System.currentTimeMillis()));
 
-            updatedResource= (Fido2DeviceResource) ScimResourceUtil.transferToResourceReplace(fidoDeviceResource,
+            updatedResource = (Fido2DeviceResource) ScimResourceUtil.transferToResourceReplace(fidoDeviceResource,
                     updatedResource, extService.getResourceExtensions(updatedResource.getClass()));
             transferAttributesToDevice(updatedResource, device);
 
             fidoDeviceService.updateFido2Device(device);
 
-            String json=resourceSerializer.serialize(updatedResource, attrsList, excludedAttrsList);
-            response=Response.ok(new URI(updatedResource.getMeta().getLocation())).entity(json).build();
-        }
-        catch (SCIMException e){
-            log.error(e.getMessage());
-            response=getErrorResponse(Response.Status.NOT_FOUND, ErrorScimType.INVALID_VALUE, e.getMessage());
+            String json =resourceSerializer.serialize(updatedResource, attrsList, excludedAttrsList);
+            response = Response.ok(new URI(updatedResource.getMeta().getLocation())).entity(json).build();
+        } catch (SCIMException e) {
+            log.error("Validation check at updateF2Device returned: {}", e.getMessage());
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_VALUE, e.getMessage());
         }
         catch (InvalidAttributeValueException e){
             log.error(e.getMessage());
@@ -179,18 +207,22 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
         try {
             log.debug("Executing web service method. deleteDevice");
 
+            response = validateExistenceOfDevice(null, id);
+            if (response != null) return response;
+            
             //No need to check id being non-null. fidoDeviceService will give null if null is provided
             GluuFido2Device device = fidoDeviceService.getFido2DeviceById(null, id);
             if (device != null) {
                 fidoDeviceService.removeFido2Device(device);
                 response = Response.noContent().build();
+            } else {
+                response = getErrorResponse(Response.Status.NOT_FOUND, ErrorScimType.INVALID_VALUE, 
+                        "Resource " + id + " not found");
             }
-            else
-                response = getErrorResponse(Response.Status.NOT_FOUND, ErrorScimType.INVALID_VALUE, "Resource " + id + " not found");
-        }
-        catch (Exception e){
+        } catch (Exception e){
             log.error("Failure at deleteDevice method", e);
-            response=getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, 
+                    "Unexpected error: " + e.getMessage());
         }
         return response;
 
@@ -214,19 +246,31 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
         Response response;
         try {
             log.debug("Executing web service method. searchDevices");
-            sortBy=translateSortByAttribute(Fido2DeviceResource.class, sortBy);
-            PagedResult<BaseScimResource> resources = searchDevices(userId, filter, sortBy, SortOrder.getByValue(sortOrder), startIndex, count, endpointUrl);
+            
+            SearchRequest searchReq = new SearchRequest();
+            response = prepareSearchRequest(searchReq.getSchemas(), filter, null, sortBy, sortOrder, startIndex, count,
+                attrsList, excludedAttrsList, searchReq);
 
-            String json = getListResponseSerialized(resources.getTotalEntriesCount(), startIndex, resources.getEntries(), attrsList, excludedAttrsList, count==0);
-            response=Response.ok(json).location(new URI(endpointUrl)).build();
-        }
-        catch (SCIMException e){
+            if (response != null) return response;
+            
+            response = validateExistenceOfUser(userId);
+            if (response != null) return response;
+
+            PagedResult<BaseScimResource> resources = searchDevices(userId, searchReq.getFilter(), 
+                    translateSortByAttribute(Fido2DeviceResource.class, searchReq.getSortBy()), 
+                    SortOrder.getByValue(searchReq.getSortOrder()), searchReq.getStartIndex(),
+                    searchReq.getCount(), endpointUrl);
+
+            String json = getListResponseSerialized(resources.getTotalEntriesCount(), 
+                    searchReq.getStartIndex(), resources.getEntries(), searchReq.getAttributesStr(),
+                    searchReq.getExcludedAttributesStr(), searchReq.getCount() == 0);
+            response = Response.ok(json).location(new URI(endpointUrl)).build();
+        } catch (SCIMException e) {
             log.error(e.getMessage(), e);
-            response=getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_FILTER, e.getMessage());
-        }
-        catch (Exception e){
-            log.error("Failure at searchDevices method", e);
-            response=getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_FILTER, e.getMessage());
+        } catch (Exception e){
+            log.error("Failure at searchF2Devices method", e);
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
         }
         return response;
 
@@ -243,14 +287,24 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
 
         log.debug("Executing web service method. searchDevicesPost");
 
+        SearchRequest searchReq = new SearchRequest();
+        Response response = prepareSearchRequest(searchRequest.getSchemas(), searchRequest.getFilter(), null, searchRequest.getSortBy(),
+                searchRequest.getSortOrder(), searchRequest.getStartIndex(), searchRequest.getCount(),
+                searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr(), searchReq);
+
+        if (response != null) return response;
+            
+        response = validateExistenceOfUser(userId);
+        if (response != null) return response;
+
         URI uri=null;
-        Response response = searchF2Devices(userId, searchRequest.getFilter(), searchRequest.getStartIndex(), searchRequest.getCount(),
-                searchRequest.getSortBy(), searchRequest.getSortOrder(), searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr());
+        response = searchF2Devices(userId, searchReq.getFilter(), searchReq.getStartIndex(), 
+                searchReq.getCount(), searchReq.getSortBy(), searchReq.getSortOrder(), 
+                searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr());
 
         try {
             uri = new URI(endpointUrl + "/" + SEARCH_SUFFIX);
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
         return Response.fromResponse(response).location(uri).build();
