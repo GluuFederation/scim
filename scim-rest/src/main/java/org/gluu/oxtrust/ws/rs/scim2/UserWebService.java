@@ -12,6 +12,7 @@ import static org.gluu.oxtrust.model.scim2.Constants.UTF8_CHARSET_FRAGMENT;
 import static org.gluu.oxtrust.model.scim2.patch.PatchOperationType.REMOVE;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 
@@ -71,7 +72,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     private Scim2PatchService scim2PatchService;
     
     private String userResourceType;
-
+    
     public Response validateExistenceOfUser(String id) {
 
         Response response = null;
@@ -106,6 +107,44 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
 
     }
 
+    private Response doSearch(String filter, Integer startIndex, Integer count, String sortBy,
+           String sortOrder, String attrsList, String excludedAttrsList, String method) {
+
+        Response response;
+        try {            
+            Pair<String, Response> checkOutput = externalContraintsService.applySearchCheck(
+                    httpHeaders, uriInfo, method, userResourceType);
+            if (checkOutput.getSecond() != null) return checkOutput.getSecond();
+
+            SearchRequest searchReq = new SearchRequest();
+            response = prepareSearchRequest(searchReq.getSchemas(), filter, checkOutput.getFirst(), 
+                    sortBy,  sortOrder, startIndex, count, attrsList, excludedAttrsList, 
+                    searchReq);
+
+            if (response != null) return response;
+
+            PagedResult<BaseScimResource> resources = scim2UserService.searchUsers(
+                    searchReq.getFilter(), translateSortByAttribute(UserResource.class, searchReq.getSortBy()),
+                    SortOrder.getByValue(searchReq.getSortOrder()), searchReq.getStartIndex(), 
+                    searchReq.getCount(), endpointUrl, getMaxCount());
+
+            String json = getListResponseSerialized(resources.getTotalEntriesCount(), 
+                    searchReq.getStartIndex(), resources.getEntries(), searchReq.getAttributesStr(),
+                    searchReq.getExcludedAttributesStr(), searchReq.getCount() == 0);
+            response = Response.ok(json).location(new URI(endpointUrl)).build();
+        } catch (SCIMException e) {
+            log.error(e.getMessage(), e);
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_FILTER, 
+                    e.getMessage());
+        } catch (Exception e) {
+            log.error("Failure at searchUsers method", e);
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, 
+                    "Unexpected error: " + e.getMessage());
+        }
+        return response;
+        
+    }
+    
     @POST
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
@@ -288,34 +327,9 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             @QueryParam(QUERY_PARAM_ATTRIBUTES) String attrsList,
             @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList) {
 
-        Response response;
-        try {
-            log.debug("Executing web service method. searchUsers");
-            
-            Pair<String, Response> checkOutput = externalContraintsService.applySearchCheck(httpHeaders,
-                    uriInfo, HttpMethod.GET, userResourceType);
-            if (checkOutput.getSecond() != null) return checkOutput.getSecond();
-            
-            SearchRequest searchReq = new SearchRequest();
-            response = prepareSearchRequest(searchReq.getSchemas(), filter, checkOutput.getFirst(), sortBy, 
-                    sortOrder, startIndex, count, attrsList, excludedAttrsList, searchReq);
-
-            if (response != null) return response;
-            
-            sortBy = translateSortByAttribute(UserResource.class, sortBy);
-            PagedResult<BaseScimResource> resources = scim2UserService.searchUsers(filter, sortBy, SortOrder.getByValue(sortOrder),
-                    startIndex, count, endpointUrl, getMaxCount());
-
-            String json = getListResponseSerialized(resources.getTotalEntriesCount(), startIndex, resources.getEntries(), attrsList, excludedAttrsList, count==0);
-            response = Response.ok(json).location(new URI(endpointUrl)).build();
-        } catch (SCIMException e) {
-            log.error(e.getMessage(), e);
-            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_FILTER, e.getMessage());
-        } catch (Exception e) {
-            log.error("Failure at searchUsers method", e);
-            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
-        }
-        return response;
+        log.debug("Executing web service method. searchUsers");
+        return doSearch(filter, startIndex, count, sortBy, sortOrder, attrsList, 
+                excludedAttrsList, HttpMethod.GET);
 
     }
 
@@ -328,33 +342,18 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @RefAdjusted
     public Response searchUsersPost(SearchRequest searchRequest) {
 
-        Response response;
+        log.debug("Executing web service method. searchUsersPost");
+        Response response = doSearch(searchRequest.getFilter(), searchRequest.getStartIndex(), 
+                searchRequest.getCount(), searchRequest.getSortBy(), searchRequest.getSortOrder(), 
+                searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr(), HttpMethod.POST);
+
+        URI uri = null;
         try {
-            log.debug("Executing web service method. searchUsersPost");
-            
-            Pair<String, Response> checkOutput = externalContraintsService.applySearchCheck(httpHeaders,
-                    uriInfo, HttpMethod.GET, userResourceType);
-            if (checkOutput.getSecond() != null) return checkOutput.getSecond();
-
-            SearchRequest searchReq = new SearchRequest();
-            response = prepareSearchRequest(searchRequest.getSchemas(), searchRequest.getFilter(), checkOutput.getFirst(),
-                    searchRequest.getSortBy(), searchRequest.getSortOrder(), searchRequest.getStartIndex(), 
-                    searchRequest.getCount(), searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr(), 
-                    searchReq);
-
-            if (response != null) return response;
-
-            URI uri = new URI(endpointUrl + "/" + SEARCH_SUFFIX);
-            //Calling searchUsers here does not provoke that method's interceptor being called (only this one's)
-            response = searchUsers(searchRequest.getFilter(), searchRequest.getStartIndex(), searchRequest.getCount(),
-                    searchRequest.getSortBy(), searchRequest.getSortOrder(), searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr());
-
-            response = Response.fromResponse(response).location(uri).build();
-        } catch (Exception e) {
-            log.error("Failure at searchUsersPost method", e);
-            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+            uri = new URI(endpointUrl + "/" + SEARCH_SUFFIX);
+        } catch (URISyntaxException e){
+            log.error(e.getMessage(), e);
         }
-        return response;
+        return Response.fromResponse(response).location(uri).build();
 
     }
 
