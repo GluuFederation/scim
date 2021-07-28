@@ -22,6 +22,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.HttpMethod;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -41,6 +42,7 @@ import org.gluu.oxtrust.model.scim2.group.GroupResource;
 import org.gluu.oxtrust.model.scim2.patch.PatchOperation;
 import org.gluu.oxtrust.model.scim2.patch.PatchRequest;
 import org.gluu.oxtrust.model.scim2.util.DateUtil;
+import org.gluu.oxtrust.model.scim2.util.ScimResourceUtil;
 import org.gluu.oxtrust.service.IGroupService;
 import org.gluu.oxtrust.service.filter.ProtectedApi;
 import org.gluu.oxtrust.service.scim2.Scim2GroupService;
@@ -71,6 +73,8 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     private Scim2PatchService scim2PatchService;
     
     private String usersUrl;
+    
+    private String groupResourceType;
 
     private Response validateExistenceOfGroup(String id) {
 
@@ -137,8 +141,11 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             assignMetaInformation(group);
 
             GluuGroup gluuGroup = scim2GroupService.preCreateGroup(group, usersUrl);
-            scim2GroupService.createGroup(gluuGroup, group, endpointUrl, usersUrl);
-            
+            response = externalContraintsService.applyEntityCheck(gluuGroup, httpHeaders,
+                    uriInfo, HttpMethod.POST, groupResourceType);
+            if (response != null) return response;
+
+            scim2GroupService.createGroup(gluuGroup, group, endpointUrl, usersUrl);            
             String json = resourceSerializer.serialize(group, attrsList, excludedAttrsList);
             response = Response.created(new URI(group.getMeta().getLocation())).entity(json).build();
         } catch (DuplicateEntryException e) {
@@ -172,9 +179,12 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             response = validateExistenceOfGroup(id);
             if (response != null) return response;
 
-            GluuGroup gluuGroup = groupService.getGroupByInum(id);  //gluuGroup is not null (check associated decorator method)            
-            GroupResource group = scim2GroupService.buildGroupResource(gluuGroup, endpointUrl, usersUrl);
+            GluuGroup gluuGroup = groupService.getGroupByInum(id);
+            response = externalContraintsService.applyEntityCheck(gluuGroup, httpHeaders,
+                    uriInfo, HttpMethod.GET, groupResourceType);
+            if (response != null) return response;
 
+            GroupResource group = scim2GroupService.buildGroupResource(gluuGroup, endpointUrl, usersUrl);
             String json = resourceSerializer.serialize(group, attrsList, excludedAttrsList);
             response = Response.ok(new URI(group.getMeta().getLocation())).entity(json).build();
         } catch (Exception e) {
@@ -224,6 +234,10 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             }
 
             GluuGroup gluuGroup = groupService.getGroupByInum(id);
+            response = externalContraintsService.applyEntityCheck(gluuGroup, httpHeaders,
+                    uriInfo, HttpMethod.PUT, groupResourceType);
+            if (response != null) return response;
+            
             GroupResource updatedResource = scim2GroupService.updateGroup(gluuGroup, group, endpointUrl, usersUrl);
             String json = resourceSerializer.serialize(updatedResource, attrsList, excludedAttrsList);
             response = Response.ok(new URI(updatedResource.getMeta().getLocation())).entity(json).build();
@@ -259,6 +273,10 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             if (response != null) return response;
 
             GluuGroup gr = groupService.getGroupByInum(id);
+            response = externalContraintsService.applyEntityCheck(gr, httpHeaders,
+                    uriInfo, HttpMethod.DELETE, groupResourceType);
+            if (response != null) return response;
+            
             scim2GroupService.deleteGroup(gr);
             response = Response.noContent().build();
         } catch (Exception e){
@@ -368,15 +386,18 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             response = validateExistenceOfGroup(id);
             if (response != null) return response;
 
-            GroupResource group = new GroupResource();
             GluuGroup gluuGroup = groupService.getGroupByInum(id);
+            response = externalContraintsService.applyEntityCheck(gluuGroup, httpHeaders,
+                    uriInfo, HttpMethod.PATCH, groupResourceType);
+            if (response != null) return response;
 
+            GroupResource group = new GroupResource();
             //Fill group instance with all info from gluuGroup
             scim2GroupService.transferAttributesToGroupResource(gluuGroup, group, endpointUrl, usersUrl);
 
             //Apply patches one by one in sequence
             for (PatchOperation po : request.getOperations()) {
-                group=(GroupResource) scim2PatchService.applyPatchOperation(group, po);
+                group = (GroupResource) scim2PatchService.applyPatchOperation(group, po);
             }
 
             //Throws exception if final representation does not pass overall validation
@@ -409,6 +430,7 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
         //Do not use getClass() here...
         init(GroupWebService.class);
         usersUrl = userWebService.getEndpointUrl();
+        groupResourceType = ScimResourceUtil.getType(GroupResource.class);
     }
 
 }
