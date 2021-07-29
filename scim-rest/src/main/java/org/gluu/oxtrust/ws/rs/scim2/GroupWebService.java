@@ -11,6 +11,7 @@ import static org.gluu.oxtrust.model.scim2.Constants.QUERY_PARAM_START_INDEX;
 import static org.gluu.oxtrust.model.scim2.Constants.UTF8_CHARSET_FRAGMENT;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -31,8 +32,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.apache.commons.lang.StringUtils;
 
+import org.apache.commons.lang.StringUtils;
 import org.gluu.oxtrust.model.GluuGroup;
 import org.gluu.oxtrust.model.exception.SCIMException;
 import org.gluu.oxtrust.model.scim2.BaseScimResource;
@@ -51,6 +52,7 @@ import org.gluu.oxtrust.service.scim2.interceptor.RefAdjusted;
 import org.gluu.persist.exception.operation.DuplicateEntryException;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
+import org.gluu.util.Pair;
 
 /**
  * Implementation of /Groups endpoint. Methods here are intercepted.
@@ -119,6 +121,44 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
 
     }
 
+    private Response doSearchGroups(String filter, Integer startIndex, Integer count,
+            String sortBy, String sortOrder, String attrsList, String excludedAttrsList,
+            String method) {
+        
+        Response response;
+        try {
+            Pair<String, Response> checkOutput = externalContraintsService.applySearchCheck(
+                    httpHeaders, uriInfo, method, groupResourceType);
+            if (checkOutput.getSecond() != null) return checkOutput.getSecond();
+            
+            SearchRequest searchReq = new SearchRequest();
+            response = prepareSearchRequest(searchReq.getSchemas(), filter, checkOutput.getFirst(), 
+                    sortBy, sortOrder, startIndex, count, attrsList, excludedAttrsList, 
+                    searchReq);
+            if (response != null) return response;
+
+            PagedResult<BaseScimResource> resources = scim2GroupService.searchGroups(
+                    searchReq.getFilter(), translateSortByAttribute(GroupResource.class, searchReq.getSortBy()), 
+                    SortOrder.getByValue(searchReq.getSortOrder()), searchReq.getStartIndex(),
+                    searchReq.getCount(), endpointUrl, usersUrl, getMaxCount());
+
+            String json = getListResponseSerialized(resources.getTotalEntriesCount(), 
+                    searchReq.getStartIndex(), resources.getEntries(), searchReq.getAttributesStr(), 
+                    searchReq.getExcludedAttributesStr(), searchReq.getCount() == 0);
+            response = Response.ok(json).location(new URI(endpointUrl)).build();
+        } catch (SCIMException e){
+            log.error(e.getMessage(), e);
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_FILTER,
+                    e.getMessage());
+        } catch (Exception e){
+            log.error("Failure at searchGroups method", e);
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR,
+                    "Unexpected error: " + e.getMessage());
+        }
+        return response;
+   
+    }
+    
     @POST
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
@@ -301,33 +341,9 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             @QueryParam(QUERY_PARAM_ATTRIBUTES) String attrsList,
             @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList) {
 
-        Response response;
-        try {
-            log.debug("Executing web service method. searchGroups");
-
-            SearchRequest searchReq = new SearchRequest();
-            response = prepareSearchRequest(searchReq.getSchemas(), filter, null, 
-                    sortBy, sortOrder, startIndex, count, attrsList, excludedAttrsList, 
-                    searchReq);
-            if (response != null) return response;
-
-            PagedResult<BaseScimResource> resources = scim2GroupService.searchGroups(
-                    searchReq.getFilter(), translateSortByAttribute(GroupResource.class, searchReq.getSortBy()), 
-                    SortOrder.getByValue(searchReq.getSortOrder()), searchReq.getStartIndex(),
-                    searchReq.getCount(), endpointUrl, usersUrl, getMaxCount());
-
-            String json = getListResponseSerialized(resources.getTotalEntriesCount(), 
-                    searchReq.getStartIndex(), resources.getEntries(), searchReq.getAttributesStr(), 
-                    searchReq.getExcludedAttributesStr(), searchReq.getCount() == 0);
-            response = Response.ok(json).location(new URI(endpointUrl)).build();
-        } catch (SCIMException e){
-            log.error(e.getMessage(), e);
-            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_FILTER, e.getMessage());
-        } catch (Exception e){
-            log.error("Failure at searchGroups method", e);
-            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
-        }
-        return response;
+        log.debug("Executing web service method. searchGroups");
+        return doSearchGroups(filter, startIndex, count, sortBy, sortOrder, attrsList, 
+                excludedAttrsList, HttpMethod.GET);
 
     }
 
@@ -341,22 +357,15 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     public Response searchGroupsPost(SearchRequest searchRequest) {
 
         log.debug("Executing web service method. searchGroupsPost");
+        Response response = doSearchGroups(searchRequest.getFilter(), searchRequest.getStartIndex(), 
+                searchRequest.getCount(), searchRequest.getSortBy(), searchRequest.getSortOrder(), 
+                searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr(),
+                HttpMethod.POST);
 
-        SearchRequest searchReq = new SearchRequest();
-        Response response = prepareSearchRequest(searchRequest.getSchemas(), searchRequest.getFilter(), null,
-                        searchRequest.getSortBy(), searchRequest.getSortOrder(), searchRequest.getStartIndex(),
-                        searchRequest.getCount(), searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr(),
-                        searchReq);
-        if (response != null) return response;
-
-        //Calling searchGroups here does not provoke that method's interceptor being called (only this one's)
-        URI uri=null;
-        response = searchGroups(searchReq.getFilter(), searchReq.getStartIndex(), searchReq.getCount(),
-                searchReq.getSortBy(), searchReq.getSortOrder(), searchReq.getAttributesStr(), searchReq.getExcludedAttributesStr());
-
+        URI uri = null;
         try {
             uri = new URI(endpointUrl + "/" + SEARCH_SUFFIX);
-        } catch (Exception e) {
+        } catch (URISyntaxException e) {
             log.error(e.getMessage(), e);
         }
         return Response.fromResponse(response).location(uri).build();
