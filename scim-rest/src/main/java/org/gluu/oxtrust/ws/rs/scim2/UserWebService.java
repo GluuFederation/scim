@@ -73,11 +73,6 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     
     private String userResourceType;
 
-    private Response notFoundResponse(String id) {
-        return getErrorResponse(Response.Status.NOT_FOUND,
-                "User with id " + id + " not found");
-    }
-
     private void checkUidExistence(String uid) throws DuplicateEntryException {
         if (personService.getPersonByUid(uid) != null) {
             throw new DuplicateEntryException("Duplicate UID value: " + uid);
@@ -196,7 +191,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             log.debug("Executing web service method. getUserById");
 
             ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
-            if (person == null) return notFoundResponse(id);
+            if (person == null) return notFoundResponse(id, userResourceType);
             
             response = externalContraintsService.applyEntityCheck(person, httpHeaders,
                     uriInfo, HttpMethod.GET, userResourceType);
@@ -242,7 +237,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
                 throw new SCIMException("Parameter id does not match with id attribute of User");
 
             ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
-            if (person == null) return notFoundResponse(id);
+            if (person == null) return notFoundResponse(id, userResourceType);
 
             response = externalContraintsService.applyEntityCheck(person, httpHeaders,
                     uriInfo, HttpMethod.PUT, userResourceType);
@@ -287,7 +282,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             log.debug("Executing web service method. deleteUser");
 
             ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
-            if (person == null) return notFoundResponse(id);
+            if (person == null) return notFoundResponse(id, userResourceType);
 
             response = externalContraintsService.applyEntityCheck(person, httpHeaders,
                     uriInfo, HttpMethod.DELETE, userResourceType);
@@ -368,7 +363,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             if (response != null) return response;
             
             ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
-            if (person == null) return notFoundResponse(id);
+            if (person == null) return notFoundResponse(id, userResourceType);
 
             response = externalContraintsService.applyEntityCheck(person, httpHeaders,
                     uriInfo, HttpMethod.PATCH, userResourceType);

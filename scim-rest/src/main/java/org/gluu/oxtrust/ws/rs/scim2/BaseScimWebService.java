@@ -91,7 +91,15 @@ public class BaseScimWebService {
     public String getEndpointUrl() {
         return endpointUrl;
     }
-
+    
+    public Response notFoundResponse(String id, String resourceType) {
+        
+        log.info("{} with inum {} not found", resourceType, id);
+        return getErrorResponse(Response.Status.NOT_FOUND, 
+                String.format("%s with id %s not found", resourceType, id));
+        
+    }
+    
     public static Response getErrorResponse(Response.Status status, String detail) {
         return getErrorResponse(status.getStatusCode(), null, detail);
     }

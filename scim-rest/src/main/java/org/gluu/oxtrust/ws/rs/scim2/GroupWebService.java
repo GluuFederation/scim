@@ -78,19 +78,6 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     
     private String groupResourceType;
 
-    private Response validateExistenceOfGroup(String id) {
-
-        Response response = null;
-        GluuGroup group = StringUtils.isEmpty(id) ? null : groupService.getGroupByInum(id);
-
-        if (group == null) {
-            log.info("Group with inum {} not found", id);
-            response = getErrorResponse(Response.Status.NOT_FOUND, "Resource " + id + " not found");
-        }
-        return response;
-
-    }
-
     private void checkDisplayNameExistence(String displayName) throws DuplicateEntryException {
 
         boolean flag = false;
@@ -216,10 +203,10 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
         Response response;
         try {
             log.debug("Executing web service method. getGroupById");
-            response = validateExistenceOfGroup(id);
-            if (response != null) return response;
 
             GluuGroup gluuGroup = groupService.getGroupByInum(id);
+            if (gluuGroup == null) return notFoundResponse(id, groupResourceType);
+            
             response = externalContraintsService.applyEntityCheck(gluuGroup, httpHeaders,
                     uriInfo, HttpMethod.GET, groupResourceType);
             if (response != null) return response;
@@ -265,18 +252,17 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             if (group.getId() != null && !group.getId().equals(id))
                 throw new SCIMException("Parameter id does not match with id attribute of Group");
 
-            response = validateExistenceOfGroup(id);
-            if (response != null) return response;
+            GluuGroup gluuGroup = groupService.getGroupByInum(id);
+            if (gluuGroup == null) return notFoundResponse(id, groupResourceType);
 
+            response = externalContraintsService.applyEntityCheck(gluuGroup, httpHeaders,
+                    uriInfo, HttpMethod.PUT, groupResourceType);
+            if (response != null) return response;
+            
             executeValidation(group, true);
             if (StringUtils.isNotEmpty(group.getDisplayName())) {
                 checkDisplayNameExistence(group.getDisplayName(), id);
             }
-
-            GluuGroup gluuGroup = groupService.getGroupByInum(id);
-            response = externalContraintsService.applyEntityCheck(gluuGroup, httpHeaders,
-                    uriInfo, HttpMethod.PUT, groupResourceType);
-            if (response != null) return response;
             
             GroupResource updatedResource = scim2GroupService.updateGroup(gluuGroup, group, endpointUrl, usersUrl);
             String json = resourceSerializer.serialize(updatedResource, attrsList, excludedAttrsList);
@@ -309,15 +295,14 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
         try {
             log.debug("Executing web service method. deleteGroup");
 
-            response = validateExistenceOfGroup(id);
-            if (response != null) return response;
+            GluuGroup gluuGroup = groupService.getGroupByInum(id);
+            if (gluuGroup == null) return notFoundResponse(id, groupResourceType);
 
-            GluuGroup gr = groupService.getGroupByInum(id);
-            response = externalContraintsService.applyEntityCheck(gr, httpHeaders,
+            response = externalContraintsService.applyEntityCheck(gluuGroup, httpHeaders,
                     uriInfo, HttpMethod.DELETE, groupResourceType);
             if (response != null) return response;
             
-            scim2GroupService.deleteGroup(gr);
+            scim2GroupService.deleteGroup(gluuGroup);
             response = Response.noContent().build();
         } catch (Exception e){
             log.error("Failure at deleteGroup method", e);
@@ -391,11 +376,10 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
 
             response = inspectPatchRequest(request, GroupResource.class);
             if (response != null) return response;
-			
-            response = validateExistenceOfGroup(id);
-            if (response != null) return response;
+            
+            GluuGroup gluuGroup = groupService.getGroupByInum(id);			
+            if (gluuGroup == null) return notFoundResponse(id, groupResourceType);
 
-            GluuGroup gluuGroup = groupService.getGroupByInum(id);
             response = externalContraintsService.applyEntityCheck(gluuGroup, httpHeaders,
                     uriInfo, HttpMethod.PATCH, groupResourceType);
             if (response != null) return response;

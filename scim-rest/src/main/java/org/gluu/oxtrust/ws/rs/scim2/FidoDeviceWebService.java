@@ -76,21 +76,6 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
     private boolean ldapBackend;
     
     private String fidoResourceType;
-
-    private Response validateExistenceOfDevice(String userId, String id) {
-        
-        //userId can be null here
-        Response response = null;
-
-        GluuCustomFidoDevice device = StringUtils.isEmpty(id) ? null : 
-                fidoDeviceService.getGluuCustomFidoDeviceById(userId, id);
-        if (device == null) {
-            log.info("Device with id {} not found", id);
-            response = getErrorResponse(Response.Status.NOT_FOUND, ErrorScimType.INVALID_VALUE, "Resource " + id + " not found");
-        }
-        return response;
-
-    }
     
     private Response doSearchDevices(String userId, String filter, Integer startIndex, 
             Integer count, String sortBy, String sortOrder, String attrsList, String excludedAttrsList,
@@ -158,10 +143,9 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
         try {
             log.debug("Executing web service method. getDeviceById");
 
-            response = validateExistenceOfDevice(userId, id);
-            if (response != null) return response;
-
             GluuCustomFidoDevice device = fidoDeviceService.getGluuCustomFidoDeviceById(userId, id);
+            if (device == null) return notFoundResponse(id, fidoResourceType);
+            
             response = externalContraintsService.applyEntityCheck(device, httpHeaders,
                     uriInfo, HttpMethod.GET, fidoResourceType);
             if (response != null) return response;
@@ -205,15 +189,14 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
                 throw new SCIMException("Parameter id does not match id attribute of Device");
 
             String userId = fidoDeviceResource.getUserId();
-            response = validateExistenceOfDevice(userId, id);
-            if (response != null) return response;
-            
-            executeValidation(fidoDeviceResource, true);
-
             GluuCustomFidoDevice device = fidoDeviceService.getGluuCustomFidoDeviceById(userId, id);            
+            if (device == null) return notFoundResponse(id, fidoResourceType);
+
             response = externalContraintsService.applyEntityCheck(device, httpHeaders,
                     uriInfo, HttpMethod.PUT, fidoResourceType);
             if (response != null) return response;
+            
+            executeValidation(fidoDeviceResource, true);
             
             FidoDeviceResource updatedResource = new FidoDeviceResource();
             transferAttributesToFidoResource(device, updatedResource, endpointUrl, userId);
@@ -252,10 +235,9 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
         try {
             log.debug("Executing web service method. deleteDevice");
 
-            response = validateExistenceOfDevice(null, id);
-            if (response != null) return response;
-
             GluuCustomFidoDevice device = fidoDeviceService.getGluuCustomFidoDeviceById(null, id);
+            if (device == null) return notFoundResponse(id, fidoResourceType);
+
             response = externalContraintsService.applyEntityCheck(device, httpHeaders,
                     uriInfo, HttpMethod.DELETE, fidoResourceType);
             if (response != null) return response;
