@@ -8,10 +8,14 @@ import org.apache.logging.log4j.Logger;
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.ext.Provider;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import javax.ws.rs.client.Client;
 
 /**
  * A Client-side filter employed to "inject" headers to the outgoing request. This filter applies only for
@@ -25,16 +29,30 @@ import java.util.Optional;
 public class AuthorizationInjectionFilter implements ClientRequestFilter {
 
     private Logger logger = LogManager.getLogger(getClass());
+    
+    private ClientMap clientMap = ClientMap.instance();
 
     public void filter(ClientRequestContext context) {
 
+        Client client = context.getClient();
         MultivaluedMap<String, Object> headers = context.getHeaders();
-        String authzHeader = ClientMap.getValue(context.getClient());
+        String authzHeader = clientMap.getValue(client);
 
         if (StringUtils.isNotEmpty(authzHeader)) {   //resteasy client is tied to an authz header
             headers.putSingle("Authorization", authzHeader);
         }
-        //Inject custom headers
+
+        //Inject app-specific custom headers
+        MultivaluedMap<String, String> map = Optional.ofNullable(clientMap.getCustomHeaders(client))
+        	.orElse(new MultivaluedHashMap<>());
+        for (String key : map.keySet()) {
+        	//strangely, headers is <String, Object> but it should be <String, String>
+        	List<Object> list = new ArrayList<>();
+        	map.get(key).forEach(list::add);
+        	headers.put(key, list);
+        }
+
+        //Inject jvm-level custom headers
         Optional.ofNullable(System.getProperty("scim.extraHeaders"))
                 .map(str -> Arrays.asList(str.split(",\\s*"))).orElse(Collections.emptyList())
                 .forEach(prop ->
