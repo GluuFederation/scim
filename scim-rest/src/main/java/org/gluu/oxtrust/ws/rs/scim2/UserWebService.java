@@ -192,13 +192,12 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
 
             ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
             if (person == null) return notFoundResponse(id, userResourceType);
-            
+
             response = externalContraintsService.applyEntityCheck(person, httpHeaders,
                     uriInfo, HttpMethod.GET, userResourceType);
             if (response != null) return response;
-            
-            UserResource user = new UserResource();
-            scim2UserService.buildUserResource(person, user, endpointUrl);
+
+            UserResource user = scim2UserService.buildUserResource(person, endpointUrl);
             String json = resourceSerializer.serialize(user, attrsList, excludedAttrsList);
             response = Response.ok(new URI(user.getMeta().getLocation())).entity(json).build();
         } catch (Exception e) {

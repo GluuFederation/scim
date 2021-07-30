@@ -498,13 +498,17 @@ public class Scim2UserService implements Serializable {
 
 	}
 
-        public void buildUserResource(ScimCustomPerson person, UserResource user, String url) {
+        public UserResource buildUserResource(ScimCustomPerson person, String url) {
 
             if (externalScimService.isEnabled() && !externalScimService.executeScimGetUserMethods(person)) {
                 throw new WebApplicationException("Failed to execute SCIM script successfully",
                         Status.PRECONDITION_FAILED);
             }
+            
+            UserResource user = new UserResource();
             transferAttributesToUserResource(person, user, url);
+            
+            return user;
             
         }
         
