@@ -37,13 +37,8 @@ import org.gluu.oxtrust.service.scim2.interceptor.RefAdjusted;
 import org.gluu.oxtrust.service.scim2.serialization.ListResponseJsonSerializer;
 import org.gluu.util.Pair;
 
-import com.wordnik.swagger.annotations.ApiOperation;
-import com.wordnik.swagger.annotations.ApiParam;
-
 /**
  * Implementation of the /.search endpoint for the root URL of the service
- *
- * Created by jgomer on 2017-10-25.
  */
 @Named
 @Path("/scim/v2/.search")
@@ -73,11 +68,10 @@ public class SearchResourcesWebService extends BaseScimWebService {
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
     @ProtectedApi
     @RefAdjusted
-    @ApiOperation(value = "General search POST /.search", notes = "Returns a list of resources (https://tools.ietf.org/html/rfc7644#section-3.4.3)", response = ListResponse.class)
-    public Response search(@ApiParam(value = "SearchRequest", required = true) SearchRequest searchRequest) {
+    public Response search(SearchRequest searchRequest) {
 
         SearchRequest searchReq = new SearchRequest();
-        Response response = prepareSearchRequest(searchRequest.getSchemas(), searchRequest.getFilter(), searchRequest.getSortBy(),
+        Response response = prepareSearchRequest(searchRequest.getSchemas(), searchRequest.getFilter(), null, searchRequest.getSortBy(),
                 searchRequest.getSortOrder(), searchRequest.getStartIndex(), searchRequest.getCount(),
                 searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr(), searchReq);
 

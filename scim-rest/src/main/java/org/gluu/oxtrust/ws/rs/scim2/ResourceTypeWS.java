@@ -32,15 +32,8 @@ import org.gluu.oxtrust.model.scim2.util.ScimResourceUtil;
 import org.gluu.oxtrust.service.scim2.ExtensionService;
 import org.gluu.oxtrust.service.scim2.interceptor.RejectFilterParam;
 
-import com.wordnik.swagger.annotations.Api;
-
-/**
- * @author Rahat Ali Date: 05.08.2015
- * Re-engineered by jgomer on 2017-09-25.
- */
 @Named("resourceTypesWs")
 @Path("/scim/v2/ResourceTypes")
-@Api(value = "/v2/ResourceTypes", description = "SCIM 2.0 ResourceType Endpoint (https://tools.ietf.org/html/rfc7643#section-6)")
 public class ResourceTypeWS extends BaseScimWebService {
 
     //The following are not computed using the endpointUrl's of web services since they are required to be constant (used in @Path annotations)

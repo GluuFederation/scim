@@ -1,5 +1,6 @@
 package gluu.scim2.client;
 
+import gluu.scim2.client.rest.CloseableClient;
 import gluu.scim2.client.rest.FreelyAccessible;
 import gluu.scim2.client.rest.provider.AuthorizationInjectionFilter;
 import gluu.scim2.client.rest.provider.ListResponseProvider;
@@ -22,6 +23,7 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.Optional;
+import javax.ws.rs.core.MultivaluedMap;
 
 /**
  * The base class for specific SCIM clients.
@@ -38,11 +40,7 @@ import java.util.Optional;
  * @param <T> The type of the internal RestEasy proxy used by this class. This is the same type that
  * {@link gluu.scim2.client.factory.ScimClientFactory ScimClientFactory} methods return.
  */
-/*
- * @author Yuriy Movchan Date: 08/23/2013
- * Re-engineered by jgomer on 2017-09-14.
- */
-public abstract class AbstractScimClient<T> implements InvocationHandler, Serializable {
+public abstract class AbstractScimClient<T> implements CloseableClient, InvocationHandler, Serializable {
 
     private static final long serialVersionUID = 9098930517944520482L;
 
@@ -53,6 +51,8 @@ public abstract class AbstractScimClient<T> implements InvocationHandler, Serial
     private T scimService;
 
     private ResteasyClient client;
+    
+    private ClientMap clientMap = ClientMap.instance();
 
     AbstractScimClient(String domain, Class<T> serviceClass) {
         /*
@@ -85,7 +85,7 @@ public abstract class AbstractScimClient<T> implements InvocationHandler, Serial
         target.register(AuthorizationInjectionFilter.class);
         target.register(ScimResourceProvider.class);
 
-        ClientMap.update(client, null);
+        clientMap.update(client, null);
     }
 
     /*
@@ -123,10 +123,9 @@ public abstract class AbstractScimClient<T> implements InvocationHandler, Serial
 
         String methodName = method.getName();
 
-        if (methodName.equals("close")) {
-            logger.info("Closing RestEasy client");
-            ClientMap.remove(client);
-            return null;
+        if (method.getDeclaringClass().equals(CloseableClient.class)) {
+        	// it's a non HTTP-related method
+        	return method.invoke(this, args);
         } else {
             Response response;
             FreelyAccessible unprotected = method.getAnnotation(FreelyAccessible.class);
@@ -135,13 +134,13 @@ public abstract class AbstractScimClient<T> implements InvocationHandler, Serial
             if (unprotected != null) {
                 response = invokeServiceMethod(method, args);
             } else {
-                ClientMap.update(client, getAuthenticationHeader());
+                clientMap.update(client, getAuthenticationHeader());
                 response = invokeServiceMethod(method, args);
 
                 if (response.getStatus() == Response.Status.UNAUTHORIZED.getStatusCode()) {
                     if (authorize(response)) {
                         logger.trace("Trying second attempt of request (former received unauthorized response code)");
-                        ClientMap.update(client, getAuthenticationHeader());
+                        clientMap.update(client, getAuthenticationHeader());
                         response = invokeServiceMethod(method, args);
                     } else {
                         logger.error("Could not get access token for current request: {}", methodName);
@@ -153,6 +152,16 @@ public abstract class AbstractScimClient<T> implements InvocationHandler, Serial
 
     }
 
+    public void close() {
+		logger.info("Closing RestEasy client");
+		clientMap.remove(client);
+    }
+
+    public void setCustomHeaders(MultivaluedMap<String, String> headers) {
+        logger.info("Setting custom headers");
+    	clientMap.setCustomHeaders(client, headers);
+    }
+    
     abstract String getAuthenticationHeader();
 
     abstract boolean authorize(Response response);

@@ -27,7 +27,7 @@ public interface ClientSideService extends ClientSideUserService, ClientSideGrou
      * Performs a GET to the <code>/ServiceProviderConfig</code> endpoint that returns a JSON structure that describes
      * the SCIM specification features available on the target service implementation. See sections 5 and 8.5 of RFC 7643.
      * @return An object abstracting the response obtained from the server to this request.
-     * A succesful response for this request should contain a status code of 200 and a ServiceProviderConfig object
+     * A successful response for this request should contain a status code of 200 and a ServiceProviderConfig object
      * in the entity body
      */
     @Path("/scim/v2/ServiceProviderConfig")
@@ -41,7 +41,7 @@ public interface ClientSideService extends ClientSideUserService, ClientSideGrou
      * Performs a GET to the <code>/ResourceTypes</code> endpoint that allows to discover the types of resources
      * available on the target service provider. See sections 6 and 8.6 of RFC 7643.
      * @return An object abstracting the response obtained from the server to this request.
-     * A succesful response for this request should contain a status code of 200 and a ListResponse in the entity body
+     * A successful response for this request should contain a status code of 200 and a ListResponse in the entity body
      * (holding a collection of ResourceType objects)
      */
     @Path("/scim/v2/ResourceTypes")
@@ -55,7 +55,7 @@ public interface ClientSideService extends ClientSideUserService, ClientSideGrou
      * Performs a GET to the <code>/Schemas</code> endpoint that allows to retrieve information about resource schemas
      * supported by the service provider. See sections 7 and 8.7 of RFC 7643.
      * @return An object abstracting the response obtained from the server to this request.
-     * A succesful response for this request should contain a status code of 200 and a ListResponse in the entity body
+     * A successful response for this request should contain a status code of 200 and a ListResponse in the entity body
      * (holding a collection of SchemaResource objects)
      */
     @Path("/scim/v2/Schemas")
@@ -71,7 +71,7 @@ public interface ClientSideService extends ClientSideUserService, ClientSideGrou
      * @param searchRequest An object containing the parameters for the query to execute. These are the same parameters
      *                      passed via URL for searches, for example in org.gluu.oxtrust.ws.rs.scim2.IUserWebService#searchUsers
      * @return An object abstracting the response obtained from the server to this request.
-     * A succesful response for this request should contain a status code of 200 and a ListResponse in the entity body
+     * A successful response for this request should contain a status code of 200 and a ListResponse in the entity body
      * (holding a collection of SCIM resource objects)
      */
     @Path("/scim/v2/.search")
@@ -86,7 +86,7 @@ public interface ClientSideService extends ClientSideUserService, ClientSideGrou
      * using a Json String to supply the payload.
      * @param searchRequestJson A String with the payload for the operation. It represents a <code>org.gluu.oxtrust.model.scim2.SearchRequest</code> object
      * @return An object abstracting the response obtained from the server to this request.
-     * A succesful response for this request should contain a status code of 200 and a ListResponse in the entity body
+     * A successful response for this request should contain a status code of 200 and a ListResponse in the entity body
      * (holding a collection of SCIM resource objects)
      */
     @Path("/scim/v2/.search")
