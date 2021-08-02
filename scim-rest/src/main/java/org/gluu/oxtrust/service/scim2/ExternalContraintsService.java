@@ -1,6 +1,7 @@
 package org.gluu.oxtrust.service.scim2;
 
 import java.util.Optional;
+import java.util.HashMap;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.core.HttpHeaders;
@@ -66,6 +67,7 @@ public class ExternalContraintsService {
         ctx.setPath(uriInfo.getPath());
         ctx.setQueryParams(uriInfo.getQueryParameters());
         ctx.setRequestHeaders(httpHeaders.getRequestHeaders());
+        ctx.setPassthroughMap(new HashMap<>());
         
         String token = Optional.ofNullable(httpHeaders.getHeaderString(HttpHeaders.AUTHORIZATION))
                 .map(authz -> authz.replaceFirst("Bearer\\s+", "")).orElse(null);        

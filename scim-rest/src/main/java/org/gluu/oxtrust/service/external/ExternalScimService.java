@@ -27,9 +27,9 @@ public class ExternalScimService extends ExternalScriptService {
         super(CustomScriptType.SCIM);
     }
 
-    private CustomScriptConfiguration findConfigWithVersion(int version) {
+    private CustomScriptConfiguration findConfigWithGEVersion(int version) {
         return customScriptConfigurations.stream()
-                .filter(sc -> executeExternalGetApiVersion(sc) == version)
+                .filter(sc -> executeExternalGetApiVersion(sc) >= version)
                 .findFirst().orElse(null);    
     }
     
@@ -532,7 +532,7 @@ public class ExternalScimService extends ExternalScriptService {
 
     public boolean executeAllowResourceOperation(Entry entity, OperationContext context) throws Exception {
         
-        CustomScriptConfiguration configuration = findConfigWithVersion(5);
+        CustomScriptConfiguration configuration = findConfigWithGEVersion(5);
         
         if (configuration == null) {
             // All scim operation calls pass
@@ -557,7 +557,7 @@ public class ExternalScimService extends ExternalScriptService {
 
     public String executeRejectedResourceOperationResponse(Entry entity, OperationContext context) throws Exception {
         
-        CustomScriptConfiguration configuration = findConfigWithVersion(5);
+        CustomScriptConfiguration configuration = findConfigWithGEVersion(5);
         if (configuration == null) {
             // this is unexpected
             log.error("No suitable custom script found");
@@ -581,7 +581,7 @@ public class ExternalScimService extends ExternalScriptService {
     }
     
     public String executeAllowSearchOperation(OperationContext context) throws Exception {
-        CustomScriptConfiguration configuration = findConfigWithVersion(5);
+        CustomScriptConfiguration configuration = findConfigWithGEVersion(5);
         
         if (configuration == null) {
             // All scim operation calls pass
@@ -606,7 +606,7 @@ public class ExternalScimService extends ExternalScriptService {
 
     public String executeRejectedSearchOperationResponse(OperationContext context) throws Exception {
         
-        CustomScriptConfiguration configuration = findConfigWithVersion(5);
+        CustomScriptConfiguration configuration = findConfigWithGEVersion(5);
         if (configuration == null) {
             // this is unexpected
             log.error("No suitable custom script found");

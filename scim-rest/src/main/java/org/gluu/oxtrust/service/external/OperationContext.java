@@ -1,6 +1,7 @@
 package org.gluu.oxtrust.service.external;
 
 import java.net.URI;
+import java.util.Map;
 import javax.ws.rs.core.MultivaluedMap;
 
 public class OperationContext {
@@ -11,6 +12,7 @@ public class OperationContext {
     private String resourceType;
     private MultivaluedMap<String, String> queryParams;
     private MultivaluedMap<String, String> requestHeaders;
+    private Map<String, Object> passthroughMap;
     private String accessToken;
 
     public String getPath() {
@@ -67,6 +69,14 @@ public class OperationContext {
 
     public void setAccessToken(String accessToken) {
         this.accessToken = accessToken;
+    }
+
+    public Map<String, Object> getPassthroughMap() {
+        return passthroughMap;
+    }
+
+    public void setPassthroughMap(Map<String, Object> passthroughMap) {
+        this.passthroughMap = passthroughMap;
     }
 
 }
