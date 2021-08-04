@@ -71,7 +71,7 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
     private ScimFilterParserService scimFilterParserService;
 
     @Inject
-    private PersistenceEntryManager ldapEntryManager;
+    private PersistenceEntryManager entryManager;
 
     private boolean ldapBackend;
     
@@ -105,11 +105,11 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
                     searchReq.getStartIndex(), resources.getEntries(), searchReq.getAttributesStr(), 
                     searchReq.getExcludedAttributesStr(), searchReq.getCount() == 0);
             response = Response.ok(json).location(new URI(endpointUrl)).build();
-        } catch (SCIMException e){
+        } catch (SCIMException e) {
             log.error(e.getMessage(), e);
             response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_FILTER,
                     e.getMessage());
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error("Failure at searchDevices method", e);
             response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR,
                     "Unexpected error: " + e.getMessage());
@@ -155,10 +155,7 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
 
             String json = resourceSerializer.serialize(fidoResource, attrsList, excludedAttrsList);
             response = Response.ok(new URI(fidoResource.getMeta().getLocation())).entity(json).build();
-        } catch (SCIMException e){
-            log.error(e.getMessage());
-            response = getErrorResponse(Response.Status.NOT_FOUND, ErrorScimType.INVALID_VALUE, e.getMessage());
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error("Failure at getDeviceById method", e);
             response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
         }
@@ -183,6 +180,7 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
         try {
             log.debug("Executing web service method. updateDevice");
 
+            //remove externalId, no place to store it in LDAP
             fidoDeviceResource.setExternalId(null);
 
             if (fidoDeviceResource.getId() != null && !fidoDeviceResource.getId().equals(id))
@@ -203,7 +201,8 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
 
             updatedResource.getMeta().setLastModified(DateUtil.millisToISOString(System.currentTimeMillis()));
 
-            updatedResource = (FidoDeviceResource) ScimResourceUtil.transferToResourceReplace(fidoDeviceResource, updatedResource, extService.getResourceExtensions(updatedResource.getClass()));
+            updatedResource = (FidoDeviceResource) ScimResourceUtil.transferToResourceReplace(fidoDeviceResource,
+                    updatedResource, extService.getResourceExtensions(updatedResource.getClass()));
             transferAttributesToDevice(updatedResource, device);
 
             fidoDeviceService.updateGluuCustomFidoDevice(device);
@@ -211,7 +210,7 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
             String json = resourceSerializer.serialize(updatedResource, attrsList, excludedAttrsList);
             response = Response.ok(new URI(updatedResource.getMeta().getLocation())).entity(json).build();
         } catch (SCIMException e) {
-            log.error("Validation check at updateDevice returned: {}", e.getMessage());
+            log.error("Validation check error: {}", e.getMessage());
             response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_VALUE, e.getMessage());
         } catch (InvalidAttributeValueException e) {
             log.error(e.getMessage());
@@ -244,7 +243,6 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
 
             fidoDeviceService.removeGluuCustomFidoDevice(device);
             response = Response.noContent().build();
-
         } catch (Exception e) {
             log.error("Failure at deleteDevice method", e);
             response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, 
@@ -293,7 +291,7 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
         URI uri = null;
         try {
             uri = new URI(endpointUrl + "/" + SEARCH_SUFFIX);
-        } catch (URISyntaxException e){
+        } catch (URISyntaxException e) {
             log.error(e.getMessage(), e);
         }
         return Response.fromResponse(response).location(uri).build();
@@ -385,7 +383,7 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
         
         PagedResult<GluuCustomFidoDevice> list;
         try {
-            list = ldapEntryManager.findPagedEntries(fidoDeviceService.getDnForFidoDevice(userId, null),
+            list = entryManager.findPagedEntries(fidoDeviceService.getDnForFidoDevice(userId, null),
                     GluuCustomFidoDevice.class, ldapFilter, null, sortBy, sortOrder, startIndex - 1, count, getMaxCount());
         } catch (Exception e) {
             log.info("Returning an empty listViewReponse");

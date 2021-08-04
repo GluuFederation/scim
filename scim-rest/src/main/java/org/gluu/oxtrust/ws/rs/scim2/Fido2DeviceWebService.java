@@ -81,7 +81,7 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
         Response response;
         try {            
             Pair<String, Response> checkOutput = externalContraintsService.applySearchCheck(
-                    httpHeaders, uriInfo, HttpMethod.GET, fido2ResourceType);
+                    httpHeaders, uriInfo, method, fido2ResourceType);
             if (checkOutput.getSecond() != null) return checkOutput.getSecond();
             
             SearchRequest searchReq = new SearchRequest();
@@ -104,10 +104,12 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
             response = Response.ok(json).location(new URI(endpointUrl)).build();
         } catch (SCIMException e) {
             log.error(e.getMessage(), e);
-            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_FILTER, e.getMessage());
-        } catch (Exception e){
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_FILTER,
+                    e.getMessage());
+        } catch (Exception e) {
             log.error("Failure at searchF2Devices method", e);
-            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, 
+                    "Unexpected error: " + e.getMessage());
         }
         return response;
 
@@ -150,9 +152,6 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
 
             String json = resourceSerializer.serialize(fidoResource, attrsList, excludedAttrsList);
             response = Response.ok(new URI(fidoResource.getMeta().getLocation())).entity(json).build();
-        } catch (SCIMException e) {
-            log.error(e.getMessage());
-            response = getErrorResponse(Response.Status.NOT_FOUND, ErrorScimType.INVALID_VALUE, e.getMessage());
         } catch (Exception e) {
             log.error("Failure at getF2DeviceById method", e);
             response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
@@ -208,14 +207,14 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
             String json = resourceSerializer.serialize(updatedResource, attrsList, excludedAttrsList);
             response = Response.ok(new URI(updatedResource.getMeta().getLocation())).entity(json).build();
         } catch (SCIMException e) {
-            log.error("Validation check at updateF2Device returned: {}", e.getMessage());
+            log.error("Validation check error: {}", e.getMessage());
             response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_VALUE, e.getMessage());
         } catch (InvalidAttributeValueException e) {
             log.error(e.getMessage());
-            response=getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.MUTABILITY, e.getMessage());
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.MUTABILITY, e.getMessage());
         } catch (Exception e) {
             log.error("Failure at updateDevice method", e);
-            response=getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
         }
         return response;
 

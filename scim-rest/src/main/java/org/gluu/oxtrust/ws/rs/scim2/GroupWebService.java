@@ -99,11 +99,9 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
         groupToFind.setDisplayName(displayName);
 
         List<GluuGroup> list = groupService.findGroups(groupToFind, 2);
-        if (list != null) {
-            for (GluuGroup g : list) {
-                if (!g.getInum().equals(id))
-                    throw new DuplicateEntryException("Duplicate group displayName value: " + displayName);
-            }
+        if (list != null &&
+            list.stream().filter(g -> !g.getInum().equals(id)).findAny().isPresent()) {
+            throw new DuplicateEntryException("Duplicate group displayName value: " + displayName);
         }
 
     }
