@@ -17,10 +17,8 @@ import org.gluu.persist.PersistenceEntryManager;
 import org.slf4j.Logger;
 
 import javax.annotation.PostConstruct;
-import javax.ejb.Stateless;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -138,7 +136,7 @@ public class UserPersistenceHelper {
     }
 
     public void removePerson(ScimCustomPerson person) {
-        persistenceEntryManager.removeRecursively(person.getDn());
+        persistenceEntryManager.removeRecursively(person.getDn(), person.getClass());
     }
 
     @PostConstruct
