@@ -13,7 +13,7 @@ public class OperationContext {
     private MultivaluedMap<String, String> queryParams;
     private MultivaluedMap<String, String> requestHeaders;
     private Map<String, Object> passthroughMap;
-    private String accessToken;
+    private TokenDetails tokenDetails;
 
     public String getPath() {
         return path;
@@ -63,20 +63,20 @@ public class OperationContext {
         this.resourceType = resourceType;
     }
 
-    public String getAccessToken() {
-        return accessToken;
-    }
-
-    public void setAccessToken(String accessToken) {
-        this.accessToken = accessToken;
-    }
-
     public Map<String, Object> getPassthroughMap() {
         return passthroughMap;
     }
 
     public void setPassthroughMap(Map<String, Object> passthroughMap) {
         this.passthroughMap = passthroughMap;
+    }
+
+    public TokenDetails getTokenDetails() {
+        return tokenDetails;
+    }
+
+    public void setTokenDetails(TokenDetails tokenDetails) {
+        this.tokenDetails = tokenDetails;
     }
 
 }
