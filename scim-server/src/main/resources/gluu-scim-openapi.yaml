@@ -7,7 +7,7 @@ info:
   license:
     name: Apache 2
     url: https://github.com/GluuFederation/scim/blob/master/LICENSE
-  version: 4.2.2
+  version: 4.3.0
 servers:
 - url: https://your.gluu.server.com/identity/restv1/scim/v2
 tags:
@@ -31,7 +31,7 @@ paths:
       operationId: get-groups
       description: Query Group resources (see section 3.4.2 of RFC 7644)
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/groups.read]
       parameters:
       - name: attributes
         in: query
@@ -105,7 +105,7 @@ paths:
       description: Allows creating a Group resource via POST (see section 3.3 of RFC
         7644)
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/groups.write]
       parameters:
       - name: attributes
         in: query
@@ -173,7 +173,7 @@ paths:
       operationId: get-group-by-id
       description: Retrieves a Group resource by Id (see section 3.4.1 of RFC 7644)
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/groups.read]
       parameters:
       - name: attributes
         in: query
@@ -227,7 +227,7 @@ paths:
         \ payload sent will replace the one in the existing resource representation.\
         \ Attributes \nnot passed in the payload will be left intact.\n"
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/groups.write]
       parameters:
       - name: attributes
         in: query
@@ -310,7 +310,7 @@ paths:
       operationId: delete-group-by-id
       description: Deletes a group resource (see section 3.6 of RFC 7644)
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/groups.write]
       parameters:
       - name: id
         in: path
@@ -348,7 +348,7 @@ paths:
         \ of additions, removals, and \nreplacements operations. See section 3.5.2\
         \ of RFC 7644\n"
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/groups.write]
       parameters:
       - name: attributes
         in: query
@@ -414,7 +414,7 @@ paths:
       operationId: search-group
       description: Query Group resources (see section 3.4.2 of RFC 7644)
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/groups.read]
       requestBody:
         description: Payload that represents the search criteria
         content:
@@ -463,7 +463,7 @@ paths:
       operationId: get-fido-devices
       description: Query Fido resources
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/fido.read]
       parameters:
       - name: attributes
         in: query
@@ -552,7 +552,7 @@ paths:
       operationId: get-fido-device-by-id
       description: Retrieves a U2F/Super Gluu device by Id
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/fido.read]
       parameters:
       - name: attributes
         in: query
@@ -611,7 +611,7 @@ paths:
         \ the existing resource representation. Attributes \nnot passed in the payload\
         \ will be left intact.\n"
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/fido.write]
       parameters:
       - name: attributes
         in: query
@@ -684,7 +684,7 @@ paths:
       operationId: delete-fido-device-by-id
       description: Deletes a Fido resource
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/fido.write]
       parameters:
       - name: id
         in: path
@@ -721,7 +721,7 @@ paths:
       operationId: search-fido-device
       description: Query Fido resources
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/fido.read]
       parameters:
       - name: userId
         in: query
@@ -786,7 +786,7 @@ paths:
       operationId: get-fido2-devices
       description: Query Fido 2 resources
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/fido2.read]
       parameters:
       - name: attributes
         in: query
@@ -875,7 +875,7 @@ paths:
       operationId: get-fido2-device-by-id
       description: Retrieves a Fido 2 device by Id
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/fido2.read]
       parameters:
       - name: attributes
         in: query
@@ -934,7 +934,7 @@ paths:
         \ the existing resource representation. Attributes \nnot passed in the payload\
         \ will be left intact.\n"
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/fido2.write]
       parameters:
       - name: attributes
         in: query
@@ -1007,7 +1007,7 @@ paths:
       operationId: delete-fido2-device-by-id
       description: Deletes a Fido 2 resource
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/fido2.write]
       parameters:
       - name: id
         in: path
@@ -1044,7 +1044,7 @@ paths:
       operationId: search-fido2-device
       description: Query Fido 2 resources
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/fido2.read]
       parameters:
       - name: userId
         in: query
@@ -1109,7 +1109,7 @@ paths:
       operationId: get-users
       description: Query User resources (see section 3.4.2 of RFC 7644)
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/users.read]
       parameters:
       - name: attributes
         in: query
@@ -1183,7 +1183,7 @@ paths:
       description: Allows creating a User resource via POST (see section 3.3 of RFC
         7644)
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/users.write]
       parameters:
       - name: attributes
         in: query
@@ -1251,7 +1251,7 @@ paths:
       operationId: get-user-by-id
       description: Retrieves a User resource by Id (see section 3.4.1 of RFC 7644)
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/users.read]
       parameters:
       - name: attributes
         in: query
@@ -1305,7 +1305,7 @@ paths:
         \ payload sent will replace the one in the existing resource representation.\
         \ Attributes \nnot passed in the payload will be left intact.\n"
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/users.write]
       parameters:
       - name: attributes
         in: query
@@ -1388,7 +1388,7 @@ paths:
       operationId: delete-user-by-id
       description: Deletes a user resource
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/users.write]
       parameters:
       - name: id
         in: path
@@ -1426,7 +1426,7 @@ paths:
         \ of additions, removals, and \nreplacements operations. See section 3.5.2\
         \ of RFC 7644\n"
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/users.write]
       parameters:
       - name: attributes
         in: query
@@ -1492,7 +1492,7 @@ paths:
       operationId: search-user
       description: Query User resources (see section 3.4.2 of RFC 7644)
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/users.read]
       requestBody:
         description: Payload that represents the search criteria
         content:
@@ -1542,7 +1542,7 @@ paths:
         - global search
       operationId: search-resources
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/all-resources.search]
       requestBody:
         description: Payload that represents the search criteria
         content:
@@ -1589,7 +1589,7 @@ paths:
       description: Send several resource operations in a single request (see section
         3.7 of RFC 7644)
       security:
-        - testmode: []
+        - scim_oauth: [https://gluu.org/scim/bulk]
       requestBody:
         description: Payload describing the operations to perform
         content:
@@ -2526,13 +2526,23 @@ components:
             items:
               $ref: '#/components/schemas/GenericResource'
   securitySchemes:
-    testmode:
+    scim_oauth:
       type: oauth2
       description: |
         Endpoints protected by a bearer token passed in the Authorization header. 
-        It is assumed your jans-scim is configured to operate in test mode. Other protection
+        It is assumed gluu-scim is configured to operate in oauth protection mode. Other protection
         modes may be available, please check SCIM docs
       flows:
         clientCredentials:
           tokenUrl: 'https://your.gluu.server.com/oxauth/restv1/token'
-          scopes: {}
+          scopes:
+            https://gluu.org/scim/users.read: Query user resources
+            https://gluu.org/scim/users.write: Modify user resources
+            https://gluu.org/scim/groups.read: Query group resources
+            https://gluu.org/scim/groups.write: Modify group resources
+            https://gluu.org/scim/fido.read: Query fido resources
+            https://gluu.org/scim/fido.write: Modify fido resources
+            https://gluu.org/scim/fido2.read: Query fido 2 resources
+            https://gluu.org/scim/fido2.write: Modify fido 2 resources
+            https://gluu.org/scim/all-resources.search: Access the root .search endpoint 
+            https://gluu.org/scim/bulk: Send requests to the bulk endpoint
