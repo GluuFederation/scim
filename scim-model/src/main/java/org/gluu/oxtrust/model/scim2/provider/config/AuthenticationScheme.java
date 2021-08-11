@@ -167,7 +167,7 @@ public class AuthenticationScheme {
 	 */
 	public static AuthenticationScheme createOAuth2(boolean primary) {
 		return new AuthenticationScheme(
-				"OAuth 2.0", "OAuth2 Access Token Authentication Scheme. Enabled only on 'SCIM Test Mode'.",
+				"OAuth 2.0", "OAuth2 Access Token Authentication Scheme. Used in protection modes: TEST or OAUTH.",
 				"http://tools.ietf.org/html/rfc6749", "http://tools.ietf.org/html/rfc6749",
 				"oauth2", primary);
 	}

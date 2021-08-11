@@ -14,6 +14,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
+import org.gluu.config.oxtrust.ScimMode;
 import org.gluu.oxtrust.model.scim2.Meta;
 import org.gluu.oxtrust.model.scim2.provider.config.AuthenticationScheme;
 import org.gluu.oxtrust.model.scim2.provider.config.ServiceProviderConfig;
@@ -39,9 +40,9 @@ public class ServiceProviderConfigWS extends BaseScimWebService {
             meta.setResourceType(ScimResourceUtil.getType(serviceProviderConfig.getClass()));
             serviceProviderConfig.setMeta(meta);
 
-            boolean onTestMode = appConfiguration.isScimTestMode();
+            boolean uma = appConfiguration.getScimProperties().getProtectionMode().equals(ScimMode.UMA);
             serviceProviderConfig.setAuthenticationSchemes(Arrays.asList(
-                    AuthenticationScheme.createOAuth2(onTestMode), AuthenticationScheme.createUma(!onTestMode)));
+                    AuthenticationScheme.createOAuth2(!uma), AuthenticationScheme.createUma(uma)));
 
             return Response.ok(resourceSerializer.serialize(serviceProviderConfig)).build();
         }
