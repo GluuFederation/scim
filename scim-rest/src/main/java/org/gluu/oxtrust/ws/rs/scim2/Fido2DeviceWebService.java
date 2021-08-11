@@ -119,7 +119,7 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/fido2.write" })
     public Response createDevice() {
         log.debug("Executing web service method. createDevice");
         return getErrorResponse(Response.Status.NOT_IMPLEMENTED, "Not implemented; device registration only happens via the FIDO 2.0 API.");
@@ -129,7 +129,7 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
     @GET
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/fido2.read" })
     @RefAdjusted
     public Response getF2DeviceById(@PathParam("id") String id,
                                   @QueryParam("userId") String userId,
@@ -165,7 +165,7 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/fido2.write" })
     @RefAdjusted
     public Response updateF2Device(
             Fido2DeviceResource fidoDeviceResource,
@@ -224,7 +224,7 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
     @DELETE
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/fido2.write" })
     public Response deleteF2Device(@PathParam("id") String id) {
 
         Response response;
@@ -252,7 +252,7 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
     @GET
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/fido2.read" })
     @RefAdjusted
     public Response searchF2Devices(
             @QueryParam("userId") String userId,
@@ -275,7 +275,7 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/fido2.read" })
     @RefAdjusted
     public Response searchF2DevicesPost(SearchRequest searchRequest, @QueryParam("userId") String userId) {
 
@@ -373,7 +373,7 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/fido2.write" })
     @RefAdjusted
     public Response patchF2Device(
             PatchRequest request,

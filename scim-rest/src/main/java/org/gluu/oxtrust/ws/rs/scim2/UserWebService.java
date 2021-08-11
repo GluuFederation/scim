@@ -137,7 +137,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/users.write" })
     @RefAdjusted
     public Response createUser(
             UserResource user,
@@ -179,7 +179,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @GET
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/users.read" })
     @RefAdjusted
     public Response getUserById(
             @PathParam("id") String id,
@@ -219,7 +219,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/users.write" })
     @RefAdjusted
     public Response updateUser(
             UserResource user,
@@ -273,7 +273,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @DELETE
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/users.write" })
     public Response deleteUser(@PathParam("id") String id) {
 
         Response response;
@@ -300,7 +300,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @GET
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/users.read" })
     @RefAdjusted
     public Response searchUsers(
             @QueryParam(QUERY_PARAM_FILTER) String filter,
@@ -322,7 +322,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/users.read" })
     @RefAdjusted
     public Response searchUsersPost(SearchRequest searchRequest) {
 
@@ -346,7 +346,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/users.write" })
     @RefAdjusted
     public Response patchUser(
             PatchRequest request,

@@ -148,7 +148,7 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/groups.write" })
     @RefAdjusted
     public Response createGroup(
             GroupResource group,
@@ -191,7 +191,7 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     @GET
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/groups.read" })
     @RefAdjusted
     public Response getGroupById(
             @PathParam("id") String id,
@@ -231,7 +231,7 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/groups.write" })
     @RefAdjusted
     public Response updateGroup(
             GroupResource group,
@@ -286,7 +286,7 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     @DELETE
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/groups.write" })
     public Response deleteGroup(@PathParam("id") String id) {
 
         Response response;
@@ -313,7 +313,7 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     @GET
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/groups.read" })
     @RefAdjusted
     public Response searchGroups(
             @QueryParam(QUERY_PARAM_FILTER) String filter,
@@ -335,7 +335,7 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/groups.read" })
     @RefAdjusted
     public Response searchGroupsPost(SearchRequest searchRequest) {
 
@@ -360,7 +360,7 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/groups.write" })
     @RefAdjusted
     public Response patchGroup(
             PatchRequest request,
