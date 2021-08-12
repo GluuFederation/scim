@@ -1,11 +1,13 @@
 package gluu.scim2.client.factory;
 
-import gluu.scim2.client.TestModeScimClient;
+import gluu.scim2.client.OAuthScimClient;
 import gluu.scim2.client.UmaScimClient;
+import gluu.scim2.client.TestModeScimClient;
 import gluu.scim2.client.rest.ClientSideService;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.nio.file.Path;
 
 import org.gluu.oxauth.model.util.SecurityProviderUtility;
 
@@ -13,17 +15,13 @@ import org.gluu.oxauth.model.util.SecurityProviderUtility;
  * A factory class to obtain "client" objects that allow interaction with the SCIM service. Two types of clients can be
  * obtained depending on the way your Gluu Server is protecting the SCIM API (test mode or UMA).
  */
-/*
- * Created by eugeniuparvan on 2/20/17.
- * Updated by jgomer on 2017-07-13
- */
 public class ScimClientFactory {
 
     private static Class<ClientSideService> defaultInterface;
 
     static {
         SecurityProviderUtility.installBCProvider();
-        defaultInterface=ClientSideService.class;
+        defaultInterface = ClientSideService.class;
     }
 
     /**
@@ -137,6 +135,30 @@ public class ScimClientFactory {
         return getTestClient(defaultInterface, domain, OIDCMetadataUrl, clientId, clientSecret);
     }
 
+    public static <T> T getOAuthClient(Class<T> interfaceClass, String domain, String OIDCMetadataUrl, 
+    	String clientId, String clientSecret, boolean secretPostAuthnMethod) throws Exception {    
+        InvocationHandler handler = new OAuthScimClient(interfaceClass, domain, OIDCMetadataUrl, 
+        	clientId, clientSecret, secretPostAuthnMethod);
+		return typedProxy(interfaceClass, handler);
+    }
+    
+    public static <T> T getOAuthClient(Class<T> interfaceClass, String domain, String OIDCMetadataUrl, 
+			String clientId, Path keyStorePath, String keyStorePassword, String keyId) throws Exception {
+		InvocationHandler handler = new OAuthScimClient(interfaceClass, domain, OIDCMetadataUrl, 
+			clientId, keyStorePath, keyStorePassword, keyId);
+		return typedProxy(interfaceClass, handler);
+    }
+
+    public static ClientSideService getOAuthClient(String domain, String OIDCMetadataUrl, 
+    	String clientId, String clientSecret, boolean secretPostAuthnMethod) throws Exception {    
+    	return getOAuthClient(defaultInterface, domain, OIDCMetadataUrl, clientId, clientSecret, secretPostAuthnMethod);
+    }
+    
+    public ClientSideService getOAuthClient(String domain, String OIDCMetadataUrl, 
+			String clientId, Path keyStorePath, String keyStorePassword, String keyId) throws Exception {
+		return getOAuthClient(defaultInterface, domain, OIDCMetadataUrl, clientId, keyStorePath, keyStorePassword, keyId);
+	}
+	
     private static <T> T typedProxy(Class <T> interfaceClass, InvocationHandler handler){
         return interfaceClass.cast(Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[]{interfaceClass}, handler));
     }
