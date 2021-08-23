@@ -55,7 +55,6 @@ import org.gluu.oxtrust.service.scim2.interceptor.RefAdjusted;
 import org.gluu.persist.exception.operation.DuplicateEntryException;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
-import org.gluu.util.Pair;
 
 /**
  * Implementation of /Users endpoint. Methods here are intercepted.
@@ -99,16 +98,14 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
            String sortOrder, String attrsList, String excludedAttrsList, String method) {
 
         Response response;
-        try {            
-            Pair<String, Response> checkOutput = externalContraintsService.applySearchCheck(
-                    httpHeaders, uriInfo, method, userResourceType);
-            if (checkOutput.getSecond() != null) return checkOutput.getSecond();
-
+        try {
             SearchRequest searchReq = new SearchRequest();
-            response = prepareSearchRequest(searchReq.getSchemas(), filter, checkOutput.getFirst(), 
-                    sortBy,  sortOrder, startIndex, count, attrsList, excludedAttrsList, 
-                    searchReq);
+            response = prepareSearchRequest(searchReq.getSchemas(), filter, sortBy,
+                    sortOrder, startIndex, count, attrsList, excludedAttrsList, searchReq);
+            if (response != null) return response;
 
+            response = externalConstraintsService.applySearchCheck(searchReq,
+                    httpHeaders, uriInfo, method, userResourceType);
             if (response != null) return response;
 
             PagedResult<BaseScimResource> resources = scim2UserService.searchUsers(
@@ -154,8 +151,8 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             ScimResourceUtil.adjustPrimarySubAttributes(user);
 
             ScimCustomPerson person = scim2UserService.preCreateUser(user);
-            response = externalContraintsService.applyEntityCheck(person, httpHeaders,
-                    uriInfo, HttpMethod.POST, userResourceType);
+            response = externalConstraintsService.applyEntityCheck(person, user,
+                    httpHeaders, uriInfo, HttpMethod.POST, userResourceType);
             if (response != null) return response;
 
             scim2UserService.createUser(person, user, endpointUrl);
@@ -193,8 +190,8 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
             if (person == null) return notFoundResponse(id, userResourceType);
 
-            response = externalContraintsService.applyEntityCheck(person, httpHeaders,
-                    uriInfo, HttpMethod.GET, userResourceType);
+            response = externalConstraintsService.applyEntityCheck(person, null,
+                    httpHeaders, uriInfo, HttpMethod.GET, userResourceType);
             if (response != null) return response;
 
             UserResource user = scim2UserService.buildUserResource(person, endpointUrl);
@@ -238,8 +235,8 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
             if (person == null) return notFoundResponse(id, userResourceType);
 
-            response = externalContraintsService.applyEntityCheck(person, httpHeaders,
-                    uriInfo, HttpMethod.PUT, userResourceType);
+            response = externalConstraintsService.applyEntityCheck(person, user,
+                    httpHeaders, uriInfo, HttpMethod.PUT, userResourceType);
             if (response != null) return response;
 
             executeValidation(user, true);
@@ -283,8 +280,8 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
             if (person == null) return notFoundResponse(id, userResourceType);
 
-            response = externalContraintsService.applyEntityCheck(person, httpHeaders,
-                    uriInfo, HttpMethod.DELETE, userResourceType);
+            response = externalConstraintsService.applyEntityCheck(person, null,
+                    httpHeaders, uriInfo, HttpMethod.DELETE, userResourceType);
             if (response != null) return response;
             
             scim2UserService.deleteUser(person);
@@ -364,8 +361,8 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
             ScimCustomPerson person = userPersistenceHelper.getPersonByInum(id);
             if (person == null) return notFoundResponse(id, userResourceType);
 
-            response = externalContraintsService.applyEntityCheck(person, httpHeaders,
-                    uriInfo, HttpMethod.PATCH, userResourceType);
+            response = externalConstraintsService.applyEntityCheck(person, request,
+                    httpHeaders, uriInfo, HttpMethod.PATCH, userResourceType);
             if (response != null) return response;
 
             UserResource user=new UserResource();

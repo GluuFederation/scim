@@ -54,7 +54,6 @@ import org.gluu.persist.PersistenceEntryManager;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
 import org.gluu.search.filter.Filter;
-import org.gluu.util.Pair;
 
 /**
  * Implementation of /FidoDevices endpoint. Methods here are intercepted.
@@ -83,14 +82,13 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
 
         Response response;
         try {
-            Pair<String, Response> checkOutput = externalContraintsService.applySearchCheck(
-                    httpHeaders, uriInfo, method, fidoResourceType);
-            if (checkOutput.getSecond() != null) return checkOutput.getSecond();
-            
             SearchRequest searchReq = new SearchRequest();
-            response = prepareSearchRequest(searchReq.getSchemas(), filter, checkOutput.getFirst(),
-                    sortBy, sortOrder, startIndex, count, attrsList, excludedAttrsList,
-                    searchReq);
+            response = prepareSearchRequest(searchReq.getSchemas(), filter, sortBy,
+                    sortOrder, startIndex, count, attrsList, excludedAttrsList, searchReq);
+            if (response != null) return response;
+            
+            response = externalConstraintsService.applySearchCheck(searchReq,
+                    httpHeaders, uriInfo, method, fidoResourceType);
             if (response != null) return response;
 
             response = validateExistenceOfUser(userId);
@@ -146,8 +144,8 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
             GluuCustomFidoDevice device = fidoDeviceService.getGluuCustomFidoDeviceById(userId, id);
             if (device == null) return notFoundResponse(id, fidoResourceType);
             
-            response = externalContraintsService.applyEntityCheck(device, httpHeaders,
-                    uriInfo, HttpMethod.GET, fidoResourceType);
+            response = externalConstraintsService.applyEntityCheck(device, null,
+                    httpHeaders, uriInfo, HttpMethod.GET, fidoResourceType);
             if (response != null) return response;
 
             FidoDeviceResource fidoResource = new FidoDeviceResource();
@@ -190,8 +188,8 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
             GluuCustomFidoDevice device = fidoDeviceService.getGluuCustomFidoDeviceById(userId, id);            
             if (device == null) return notFoundResponse(id, fidoResourceType);
 
-            response = externalContraintsService.applyEntityCheck(device, httpHeaders,
-                    uriInfo, HttpMethod.PUT, fidoResourceType);
+            response = externalConstraintsService.applyEntityCheck(device, fidoDeviceResource,
+                    httpHeaders, uriInfo, HttpMethod.PUT, fidoResourceType);
             if (response != null) return response;
             
             executeValidation(fidoDeviceResource, true);
@@ -237,8 +235,8 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
             GluuCustomFidoDevice device = fidoDeviceService.getGluuCustomFidoDeviceById(null, id);
             if (device == null) return notFoundResponse(id, fidoResourceType);
 
-            response = externalContraintsService.applyEntityCheck(device, httpHeaders,
-                    uriInfo, HttpMethod.DELETE, fidoResourceType);
+            response = externalConstraintsService.applyEntityCheck(device, null,
+                    httpHeaders, uriInfo, HttpMethod.DELETE, fidoResourceType);
             if (response != null) return response;
 
             fidoDeviceService.removeGluuCustomFidoDevice(device);

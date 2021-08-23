@@ -19,7 +19,9 @@ import javax.ws.rs.Path;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+
 import org.apache.commons.lang.StringUtils;
+
 import org.gluu.config.oxtrust.AppConfiguration;
 import org.gluu.oxtrust.model.GluuCustomPerson;
 import org.gluu.oxtrust.model.exception.SCIMException;
@@ -39,7 +41,7 @@ import org.gluu.oxtrust.model.scim2.util.DateUtil;
 import org.gluu.oxtrust.service.IPersonService;
 import org.gluu.oxtrust.service.antlr.scimFilter.util.FilterUtil;
 import org.gluu.oxtrust.service.scim2.ExtensionService;
-import org.gluu.oxtrust.service.scim2.ExternalContraintsService;
+import org.gluu.oxtrust.service.scim2.ExternalConstraintsService;
 import org.gluu.oxtrust.service.scim2.UserPersistenceHelper;
 import org.gluu.oxtrust.service.scim2.serialization.ListResponseJsonSerializer;
 import org.gluu.oxtrust.service.scim2.serialization.ScimResourceSerializer;
@@ -74,7 +76,7 @@ public class BaseScimWebService {
     UserPersistenceHelper userPersistenceHelper;
     
     @Inject
-    ExternalContraintsService externalContraintsService;
+    ExternalConstraintsService externalConstraintsService;
 
     @Context
     HttpHeaders httpHeaders;
@@ -222,8 +224,8 @@ public class BaseScimWebService {
     }
 
     protected Response prepareSearchRequest(List<String> schemas, String filter,
-            String filterPrepend, String sortBy, String sortOrder, Integer startIndex,
-            Integer count, String attrsList, String excludedAttrsList, SearchRequest request) {
+            String sortBy, String sortOrder, Integer startIndex, Integer count,
+            String attrsList, String excludedAttrsList, SearchRequest request) {
 
         Response response = null;
 
@@ -241,13 +243,6 @@ public class BaseScimWebService {
 
                 if (StringUtils.isEmpty(sortOrder) || !sortOrder.equals(SortOrder.DESCENDING.getValue())) {
                     sortOrder = SortOrder.ASCENDING.getValue();
-                }
-                if (!StringUtils.isEmpty(filterPrepend)) {
-                    if (StringUtils.isEmpty(filter)) {
-                        filter = filterPrepend;
-                    } else {
-                        filter = String.format("%s and (%s)", filterPrepend, filter);
-                    }
                 }
 
                 request.setSchemas(schemas);
