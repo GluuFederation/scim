@@ -194,7 +194,8 @@ public class AuthenticationScheme {
 	public static AuthenticationScheme createUma(boolean primary) {
 		return new AuthenticationScheme(
 				"UMA 2.0", "UMA Authentication Scheme",
-				"https://docs.kantarainitiative.org/uma/ed/oauth-uma-grant-2.0-06.html", "https://www.gluu.org/docs/gluu-server/admin-guide/uma/",
+				"https://docs.kantarainitiative.org/uma/ed/oauth-uma-grant-2.0-06.html",
+				"https://docs.kantarainitiative.org/uma/ed/oauth-uma-grant-2.0-06.html",
 				"uma", primary);
 	}
 
