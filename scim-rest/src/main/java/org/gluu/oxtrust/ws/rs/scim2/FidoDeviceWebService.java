@@ -50,6 +50,7 @@ import org.gluu.oxtrust.service.IFidoDeviceService;
 import org.gluu.oxtrust.service.antlr.scimFilter.ScimFilterParserService;
 import org.gluu.oxtrust.service.filter.ProtectedApi;
 import org.gluu.oxtrust.service.scim2.interceptor.RefAdjusted;
+import org.gluu.oxtrust.service.scim2.UserPersistenceHelper;
 import org.gluu.persist.PersistenceEntryManager;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
@@ -63,6 +64,9 @@ import org.gluu.search.filter.Filter;
 @Path("/scim/v2/FidoDevices")
 public class FidoDeviceWebService extends BaseScimWebService implements IFidoDeviceWebService {
 
+    @Inject
+    private UserPersistenceHelper userPersistenceHelper;
+    
     @Inject
 	private IFidoDeviceService fidoDeviceService;
 
@@ -149,7 +153,8 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
             if (response != null) return response;
 
             FidoDeviceResource fidoResource = new FidoDeviceResource();
-            transferAttributesToFidoResource(device, fidoResource, endpointUrl, getUserInumFromDN(device.getDn()));
+            transferAttributesToFidoResource(device, fidoResource, endpointUrl,
+                userPersistenceHelper.getUserInumFromDN(device.getDn()));
 
             String json = resourceSerializer.serialize(fidoResource, attrsList, excludedAttrsList);
             response = Response.ok(new URI(fidoResource.getMeta().getLocation())).entity(json).build();
@@ -393,7 +398,8 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
 
         for (GluuCustomFidoDevice device : list.getEntries()){
             FidoDeviceResource scimDev=new FidoDeviceResource();
-            transferAttributesToFidoResource(device, scimDev, endpointUrl, getUserInumFromDN(device.getDn()));
+            transferAttributesToFidoResource(device, scimDev, endpointUrl,
+                userPersistenceHelper.getUserInumFromDN(device.getDn()));
             resources.add(scimDev);
         }
         log.info ("Found {} matching entries - returning {}", list.getTotalEntriesCount(), list.getEntries().size());

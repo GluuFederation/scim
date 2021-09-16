@@ -15,8 +15,6 @@ import org.gluu.oxtrust.model.scim2.util.ScimResourceUtil;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.*;
 

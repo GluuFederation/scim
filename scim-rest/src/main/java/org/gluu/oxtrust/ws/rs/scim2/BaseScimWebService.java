@@ -135,12 +135,6 @@ public class BaseScimWebService {
 
     }
 
-    String getUserInumFromDN(String deviceDn){
-        String baseDn=personService.getDnForPerson(null).replaceAll("\\s*","");
-        deviceDn=deviceDn.replaceAll("\\s*","").replaceAll("," + baseDn, "");
-        return deviceDn.substring(deviceDn.indexOf("inum=")+5);
-    }
-
     int getMaxCount(){
         return appConfiguration.getScimProperties().getMaxCount();
     }

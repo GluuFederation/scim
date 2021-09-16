@@ -48,7 +48,7 @@ class traversalClass {
     private Map<String, Object> smallerMap(String prefix, Map<String, Object> source, Object destination, boolean replacing){
         Map<String, Object> smallMap = (destination==null) ? new HashMap<>() : IntrospectUtil.strObjMap(destination);
         traverse(prefix, source, smallMap, replacing);
-        return smallMap.size()==0 ? null : smallMap;
+        return smallMap.isEmpty() ? null : smallMap;
     }
 
     void traverse(String prefix, Map<String, Object> source, Map<String, Object> destination, boolean replacing){
@@ -62,10 +62,9 @@ class traversalClass {
                 Attribute attrAnnot=IntrospectUtil.getFieldAnnotation(getNewPrefix(prefix, key), base, Attribute.class);
 
                 if (attrAnnot != null && !attrAnnot.mutability().equals(READ_ONLY)) {
-                    if (value instanceof Map)
+                    if (value instanceof Map) {
                         value = smallerMap(getNewPrefix(prefix, key), IntrospectUtil.strObjMap(value), destValue, replacing);
-                    else
-                    if (attrAnnot.mutability().equals(IMMUTABLE) && destValue != null && !value.equals(destValue)) {
+                    } else if (attrAnnot.mutability().equals(IMMUTABLE) && destValue != null && !value.equals(destValue)) {
                         //provokes no more traversals
                         error = "Invalid value passed for immutable attribute " + key;
                         value = null;
@@ -87,7 +86,7 @@ class traversalClass {
                                 }
                             }
                             //Do the arrangement so that only one primary="true" can stay in data
-                            value = col.size()==0 ? null : adjustPrimarySubAttributes(col, size);
+                            value = col.isEmpty() ? null : adjustPrimarySubAttributes(col, size);
                         }
                         destination.put(key, value);
                     }
@@ -298,7 +297,7 @@ public class ScimResourceUtil {
      * existing collection.</li>
      * </ul>
      * @param replacementDataSource Object with the information to be incorporated. Only non-null attributes of this
-     *                                object end up being transfered to the result
+     *                                object end up being transferred to the result
      * @param originalDataSource Object (SCIM resource) that provides the original data
      * @param extensions A list of <code>Extensions</code> associated to parameter <code>originalDataSource</code>.
      *                   This helps to manipulate the transference of custom attributes values.

@@ -1,5 +1,6 @@
 package org.gluu.oxtrust.ws.rs.scim2;
 
+import static org.gluu.oxtrust.model.scim2.Constants.GROUP_OVERHEAD_BYPASS_PARAM;
 import static org.gluu.oxtrust.model.scim2.Constants.MEDIA_TYPE_SCIM_JSON;
 import static org.gluu.oxtrust.model.scim2.Constants.QUERY_PARAM_ATTRIBUTES;
 import static org.gluu.oxtrust.model.scim2.Constants.QUERY_PARAM_COUNT;
@@ -13,6 +14,7 @@ import static org.gluu.oxtrust.model.scim2.Constants.UTF8_CHARSET_FRAGMENT;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.function.Predicate;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -77,6 +79,8 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     
     private String groupResourceType;
 
+    private Predicate<String> selectionFilterSkipPredicate;
+
     private void checkDisplayNameExistence(String displayName) throws DuplicateEntryException {
 
         boolean flag = false;
@@ -107,7 +111,7 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
 
     private Response doSearchGroups(String filter, Integer startIndex, Integer count,
             String sortBy, String sortOrder, String attrsList, String excludedAttrsList,
-            String method) {
+            String method, boolean fillMembersDisplay) {
         
         Response response;
         try {
@@ -123,7 +127,7 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             PagedResult<BaseScimResource> resources = scim2GroupService.searchGroups(
                     searchReq.getFilter(), translateSortByAttribute(GroupResource.class, searchReq.getSortBy()), 
                     SortOrder.getByValue(searchReq.getSortOrder()), searchReq.getStartIndex(),
-                    searchReq.getCount(), endpointUrl, usersUrl, getMaxCount());
+                    searchReq.getCount(), endpointUrl, usersUrl, getMaxCount(), fillMembersDisplay);
 
             String json = getListResponseSerialized(resources.getTotalEntriesCount(), 
                     searchReq.getStartIndex(), resources.getEntries(), searchReq.getAttributesStr(), 
@@ -163,12 +167,16 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             checkDisplayNameExistence(group.getDisplayName());
             assignMetaInformation(group);
 
-            GluuGroup gluuGroup = scim2GroupService.preCreateGroup(group, usersUrl);
+            boolean skipValidation = isMembersValidationSkipped();
+            boolean displayExcluded = isDisplayExcluded(skipValidation, attrsList, excludedAttrsList);
+            GluuGroup gluuGroup = scim2GroupService.preCreateGroup(group, skipValidation,
+                    !displayExcluded, usersUrl);
+
             response = externalConstraintsService.applyEntityCheck(gluuGroup, group,
                     httpHeaders, uriInfo, HttpMethod.POST, groupResourceType);
             if (response != null) return response;
 
-            scim2GroupService.createGroup(gluuGroup, group, endpointUrl, usersUrl);            
+            scim2GroupService.createGroup(gluuGroup, group, !displayExcluded, endpointUrl, usersUrl);           
             String json = resourceSerializer.serialize(group, attrsList, excludedAttrsList);
             response = Response.created(new URI(group.getMeta().getLocation())).entity(json).build();
         } catch (DuplicateEntryException e) {
@@ -207,7 +215,10 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
                     httpHeaders, uriInfo, HttpMethod.GET, groupResourceType);
             if (response != null) return response;
 
-            GroupResource group = scim2GroupService.buildGroupResource(gluuGroup, endpointUrl, usersUrl);
+            boolean displayExcluded = isDisplayExcluded(false, attrsList, excludedAttrsList);
+            GroupResource group = scim2GroupService.buildGroupResource(gluuGroup,
+                    !displayExcluded, endpointUrl, usersUrl);
+
             String json = resourceSerializer.serialize(group, attrsList, excludedAttrsList);
             response = Response.ok(new URI(group.getMeta().getLocation())).entity(json).build();
         } catch (Exception e) {
@@ -259,8 +270,12 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             if (StringUtils.isNotEmpty(group.getDisplayName())) {
                 checkDisplayNameExistence(group.getDisplayName(), id);
             }
-            
-            GroupResource updatedResource = scim2GroupService.updateGroup(gluuGroup, group, endpointUrl, usersUrl);
+
+            boolean skipValidation = isMembersValidationSkipped();
+            boolean displayExcluded = isDisplayExcluded(skipValidation, attrsList, excludedAttrsList);
+            GroupResource updatedResource = scim2GroupService.updateGroup(gluuGroup,
+                    group, skipValidation, !displayExcluded, endpointUrl, usersUrl);
+
             String json = resourceSerializer.serialize(updatedResource, attrsList, excludedAttrsList);
             response = Response.ok(new URI(updatedResource.getMeta().getLocation())).entity(json).build();
         } catch (DuplicateEntryException e) {
@@ -323,8 +338,9 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList) {
 
         log.debug("Executing web service method. searchGroups");
+        boolean displayExcluded = isDisplayExcluded(false, attrsList, excludedAttrsList);
         return doSearchGroups(filter, startIndex, count, sortBy, sortOrder, attrsList, 
-                excludedAttrsList, HttpMethod.GET);
+                excludedAttrsList, HttpMethod.GET, !displayExcluded);
 
     }
 
@@ -338,10 +354,13 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     public Response searchGroupsPost(SearchRequest searchRequest) {
 
         log.debug("Executing web service method. searchGroupsPost");
+        boolean displayExcluded = isDisplayExcluded(false, searchRequest.getAttributesStr(),
+                searchRequest.getExcludedAttributesStr());
+
         Response response = doSearchGroups(searchRequest.getFilter(), searchRequest.getStartIndex(), 
                 searchRequest.getCount(), searchRequest.getSortBy(), searchRequest.getSortOrder(), 
                 searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr(),
-                HttpMethod.POST);
+                HttpMethod.POST, !displayExcluded);
 
         URI uri = null;
         try {
@@ -380,13 +399,18 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
                     httpHeaders, uriInfo, HttpMethod.PATCH, groupResourceType);
             if (response != null) return response;
 
+            boolean skipValidation = isMembersValidationSkipped();
+            boolean displayExcluded = isDisplayExcluded(skipValidation, attrsList, excludedAttrsList);
+
             GroupResource group = new GroupResource();
             //Fill group instance with all info from gluuGroup
-            scim2GroupService.transferAttributesToGroupResource(gluuGroup, group, endpointUrl, usersUrl);
+            scim2GroupService.transferAttributesToGroupResource(gluuGroup, group,
+                !skipValidation, endpointUrl, usersUrl);
 
+            Predicate<String> p = skipValidation ? selectionFilterSkipPredicate : (filter -> false);
             //Apply patches one by one in sequence
             for (PatchOperation po : request.getOperations()) {
-                group = (GroupResource) scim2PatchService.applyPatchOperation(group, po);
+                group = (GroupResource) scim2PatchService.applyPatchOperation(group, po, p);
             }
 
             //Throws exception if final representation does not pass overall validation
@@ -397,7 +421,8 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             group.getMeta().setLastModified(DateUtil.millisToISOString(System.currentTimeMillis()));
 
             //Replaces the information found in gluuGroup with the contents of group
-            scim2GroupService.replaceGroupInfo(gluuGroup, group, endpointUrl, usersUrl);
+            scim2GroupService.replaceGroupInfo(gluuGroup, group, skipValidation, !displayExcluded,
+                    endpointUrl, usersUrl);
 
             String json = resourceSerializer.serialize(group, attrsList, excludedAttrsList);
             response = Response.ok(new URI(group.getMeta().getLocation())).entity(json).build();
@@ -414,12 +439,50 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
 
     }
 
+    private boolean isDisplayExcluded(boolean skipMembersValidation, String include, String exclude) {
+
+        boolean excluded = false;
+        if (skipMembersValidation) {
+            //In overhead bypass mode, regardless of other params, display is excluded from outputs
+            excluded = true;
+        } else if (include != null) {
+            excluded = !scim2GroupService.membersDisplayInPath(include);
+        } else if (exclude != null) {
+            excluded = scim2GroupService.membersDisplayInPath(exclude);
+        }
+        
+        if (excluded) {
+            log.info("Members display will be ignored");
+        }
+        return excluded;
+
+    }
+    
+    private boolean isMembersValidationSkipped() {
+        
+        boolean overheadBypass = uriInfo.getQueryParameters().getFirst(GROUP_OVERHEAD_BYPASS_PARAM) != null
+                || httpHeaders.getHeaderString(GROUP_OVERHEAD_BYPASS_PARAM) != null;
+        
+        if (overheadBypass) {
+            log.info("{} param found", GROUP_OVERHEAD_BYPASS_PARAM);
+        }
+        return overheadBypass;
+        
+    }
+
     @PostConstruct
     public void setup(){
         //Do not use getClass() here...
         init(GroupWebService.class);
         usersUrl = userWebService.getEndpointUrl();
         groupResourceType = ScimResourceUtil.getType(GroupResource.class);
+
+        //An approximate predicate that tries to guess if a SCIM filter contains
+        //an expression involving display attribute
+        selectionFilterSkipPredicate = filter -> {
+            String filth = filter.replaceAll(ScimResourceUtil.getDefaultSchemaUrn(GroupResource.class) + ":", "");
+            return filth.matches(".*display\\s+(eq|ne|co|sw|ew|gt|lt|ge|le|pr).*");
+        };        
     }
 
 }

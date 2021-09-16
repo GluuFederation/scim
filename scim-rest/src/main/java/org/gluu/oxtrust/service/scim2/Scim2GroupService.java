@@ -2,9 +2,12 @@ package org.gluu.oxtrust.service.scim2;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -30,14 +33,12 @@ import org.gluu.persist.PersistenceEntryManager;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
 import org.gluu.search.filter.Filter;
+
 import org.slf4j.Logger;
 
 @ApplicationScoped
 public class Scim2GroupService implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1555887165477267426L;
 
 	@Inject
@@ -64,7 +65,11 @@ public class Scim2GroupService implements Serializable {
 	@Inject
 	private PersistenceEntryManager ldapEntryManager;
 
-	private void transferAttributesToGroup(GroupResource res, GluuGroup group, String usersUrl) {
+    @Inject
+    private UserPersistenceHelper userPersistenceHelper;
+
+	private void transferAttributesToGroup(GroupResource res, GluuGroup group,
+            boolean skipMembersValidation, boolean fillMissingDisplayKnownMember, String usersUrl) {
 
 		// externalId (so oxTrustExternalId) not part of LDAP schema
 		group.setAttribute("oxTrustMetaCreated", res.getMeta().getCreated());
@@ -76,23 +81,47 @@ public class Scim2GroupService implements Serializable {
 		group.setStatus(GluuStatus.ACTIVE);
 		group.setOrganization(organizationService.getDnForOrganization());
 
-		// Add the members, and complement the $refs and users' display names in res
 		Set<Member> members = res.getMembers();
 		if (members != null && members.size() > 0) {
+                    
+                    Set<String> groupMembers = group.getMembers().stream()
+                            .map(userPersistenceHelper::getUserInumFromDN).collect(
+                                    Collectors.toCollection(HashSet::new));
+
 			List<String> listMembers = new ArrayList<>();
 			List<Member> invalidMembers = new ArrayList<>();
 
+                        // Add the members, and complement the $refs and users' display names in res
 			for (Member member : members) {
-				String inum = member.getValue(); // it's not null as it is required in GroupResource
-				GluuCustomPerson person = personService.getPersonByInum(inum);
+				GluuCustomPerson person;
+                            // it's not null as it is required in GroupResource
+				String inum = member.getValue();
+
+                                if (!skipMembersValidation && (!groupMembers.contains(inum) ||
+                                        (fillMissingDisplayKnownMember && member.getDisplay() == null))) {
+                                    //when the member is known, data carried in getDisplay is trusted
+
+                                    person = personService.getPersonByInum(inum);
+                                    if (person != null) {
+                                        member.setDisplay(person.getDisplayName());
+                                    }
+                                } else {
+                                    person = new GluuCustomPerson();
+                                    person.setDn(personService.getDnForPerson(inum));
+                                }
 
 				if (person == null) {
 					log.info("Member identified by {} does not exist. Ignored", inum);
 					invalidMembers.add(member);
 				} else {
-					member.setDisplay(person.getDisplayName());
 					member.setRef(usersUrl + "/" + inum);
 					member.setType(ScimResourceUtil.getType(UserResource.class));
+                                        
+                                        if (skipMembersValidation) {
+                                            //when no validation takes place, display values may not be
+                                            //reliable (ie. supplied by application consuming the service)
+                                            member.setDisplay(null);
+                                        }
 
 					listMembers.add(person.getDn());
 				}
@@ -100,8 +129,9 @@ public class Scim2GroupService implements Serializable {
 			group.setMembers(listMembers);
 
 			members.removeAll(invalidMembers);
-			members = members.size() == 0 ? null : members;
-			res.setMembers(members);
+                        if (members.isEmpty()) {
+                            res.setMembers(null);
+                        }                        
 		} else {
 			group.setMembers(new ArrayList<>());
 		}
@@ -116,8 +146,8 @@ public class Scim2GroupService implements Serializable {
 		gluuGroup.setDn(dn);
 	}
 
-	public void transferAttributesToGroupResource(GluuGroup gluuGroup, GroupResource res, String groupsUrl,
-			String usersUrl) {
+	public void transferAttributesToGroupResource(GluuGroup gluuGroup, GroupResource res,
+            boolean fillMembersDisplay, String groupsUrl, String usersUrl) {
 
 		res.setId(gluuGroup.getInum());
 
@@ -139,31 +169,41 @@ public class Scim2GroupService implements Serializable {
 
 			for (String dn : memberDNs) {
 				GluuCustomPerson person = null;
-				try {
+                                
+                                if (fillMembersDisplay) {
+                                    try {                                    
 					person = personService.getPersonByDn(dn);
-				} catch (Exception e) {
-					log.warn("Wrong member entry {} found in group {}", dn, gluuGroup.getDisplayName());
-				}
-				if (person != null) {
-					Member aMember = new Member();
-					aMember.setValue(person.getInum());
-					aMember.setRef(usersUrl + "/" + person.getInum());
-					aMember.setType(ScimResourceUtil.getType(UserResource.class));
-					aMember.setDisplay(person.getDisplayName());
+                                    } catch (Exception e) {
+                                        log.warn("Wrong member entry {} found in group {}",
+                                                dn, gluuGroup.getDisplayName());
+                                    }
+                                }
+                                
+                                if (person == null) {
+                                    person = new GluuCustomPerson();
+                                    person.setInum(userPersistenceHelper.getUserInumFromDN(dn));
+                                }
+                                
+                                Member aMember = new Member();
+                                aMember.setValue(person.getInum());
+                                aMember.setRef(usersUrl + "/" + person.getInum());
+                                aMember.setType(ScimResourceUtil.getType(UserResource.class));
+                                aMember.setDisplay(person.getDisplayName());
 
-					members.add(aMember);
-				}
+                                members.add(aMember);
 			}
 			res.setMembers(members);
 		}
 	}
 
-        public GluuGroup preCreateGroup(GroupResource group, String usersUrl) throws Exception {
+        public GluuGroup preCreateGroup(GroupResource group, boolean skipMembersValidation,
+                boolean fillDisplay, String usersUrl) throws Exception {
 
             log.info("Preparing to create group {}", group.getDisplayName());
 
             GluuGroup gluuGroup = new GluuGroup();
-            transferAttributesToGroup(group, gluuGroup, usersUrl);
+            transferAttributesToGroup(group, gluuGroup, skipMembersValidation, fillDisplay,
+                    usersUrl);
             assignComputedAttributesToGroup(gluuGroup);
             
             return gluuGroup;
@@ -181,7 +221,8 @@ public class Scim2GroupService implements Serializable {
 	 * @param usersUrl Base URL associated to user resources in SCIM (eg. .../scim/v2/Users)
 	 * @throws Exception In case of unexpected error
 	 */
-	public void createGroup(GluuGroup gluuGroup, GroupResource group, String groupsUrl, String usersUrl) throws Exception {
+	public void createGroup(GluuGroup gluuGroup, GroupResource group, boolean fillMembersDisplay,
+                String groupsUrl, String usersUrl) throws Exception {
 
 		String location = groupsUrl + "/" + gluuGroup.getInum();
 		gluuGroup.setAttribute("oxTrustMetaLocation", location);
@@ -198,7 +239,8 @@ public class Scim2GroupService implements Serializable {
 			syncMemberAttributeInPerson(gluuGroup.getDn(), null, gluuGroup.getMembers());
 
 			// Copy back to group the info from gluuGroup
-			transferAttributesToGroupResource(gluuGroup, group, groupsUrl, usersUrl);
+			transferAttributesToGroupResource(gluuGroup, group, fillMembersDisplay,
+                            groupsUrl, usersUrl);
 			externalScimService.executeScimPostCreateGroupMethods(gluuGroup);
 		} else {
 			groupService.addGroup(gluuGroup);
@@ -210,29 +252,33 @@ public class Scim2GroupService implements Serializable {
 
 	}
 
-        public GroupResource buildGroupResource(GluuGroup gluuGroup, String endpointUrl, String usersUrl) {
+        public GroupResource buildGroupResource(GluuGroup gluuGroup, boolean fillMembersDisplay,
+                String endpointUrl, String usersUrl) {
 
             GroupResource group = new GroupResource();
             if (externalScimService.isEnabled() && !externalScimService.executeScimGetGroupMethods(gluuGroup)) {
                 throw new WebApplicationException("Failed to execute SCIM script successfully",
                         Status.PRECONDITION_FAILED);
             }
-            transferAttributesToGroupResource(gluuGroup, group, endpointUrl, usersUrl);
+            transferAttributesToGroupResource(gluuGroup, group, fillMembersDisplay, endpointUrl, usersUrl);
             
             return group;
             
         }
         
-	public GroupResource updateGroup(GluuGroup gluuGroup, GroupResource group, String groupsUrl, String usersUrl)
-			throws Exception {
+	public GroupResource updateGroup(GluuGroup gluuGroup, GroupResource group,
+                boolean skipMembersValidation, boolean fillMembersDisplay, String groupsUrl,
+                String usersUrl) throws Exception {
 
 		GroupResource tmpGroup = new GroupResource();
-		transferAttributesToGroupResource(gluuGroup, tmpGroup, groupsUrl, usersUrl);
+		transferAttributesToGroupResource(gluuGroup, tmpGroup, !skipMembersValidation,
+                        groupsUrl, usersUrl);
 		tmpGroup.getMeta().setLastModified(DateUtil.millisToISOString(System.currentTimeMillis()));
 
 		tmpGroup = (GroupResource) ScimResourceUtil.transferToResourceReplace(group, tmpGroup,
 				extService.getResourceExtensions(group.getClass()));
-		replaceGroupInfo(gluuGroup, tmpGroup, groupsUrl, usersUrl);
+		replaceGroupInfo(gluuGroup, tmpGroup, skipMembersValidation, fillMembersDisplay,
+                        groupsUrl, usersUrl);
 
 		return tmpGroup;
 
@@ -256,14 +302,16 @@ public class Scim2GroupService implements Serializable {
 
 	}
 
-	public void replaceGroupInfo(GluuGroup gluuGroup, GroupResource group, String groupsUrl, String usersUrl)
-			throws Exception {
+	public void replaceGroupInfo(GluuGroup gluuGroup, GroupResource group,
+                boolean skipMembersValidation, boolean fillMembersDisplay, String groupsUrl,
+                String usersUrl) throws Exception {
 
 		List<String> olderMembers = new ArrayList<>();
 		if (gluuGroup.getMembers() != null)
 			olderMembers.addAll(gluuGroup.getMembers());
 
-		transferAttributesToGroup(group, gluuGroup, usersUrl);
+		transferAttributesToGroup(group, gluuGroup, skipMembersValidation,
+                        fillMembersDisplay, usersUrl);
 		log.debug("replaceGroupInfo. Updating group info in LDAP");
 
 		if (externalScimService.isEnabled()) {
@@ -277,7 +325,7 @@ public class Scim2GroupService implements Serializable {
 			syncMemberAttributeInPerson(gluuGroup.getDn(), olderMembers, gluuGroup.getMembers());
 
 			// Copy back to user the info from gluuGroup
-			transferAttributesToGroupResource(gluuGroup, group, groupsUrl, usersUrl);
+			transferAttributesToGroupResource(gluuGroup, group, fillMembersDisplay, groupsUrl, usersUrl);
 			externalScimService.executeScimPostUpdateGroupMethods(gluuGroup);
 		} else {
 			groupService.updateGroup(gluuGroup);
@@ -287,7 +335,7 @@ public class Scim2GroupService implements Serializable {
 	}
 
 	public PagedResult<BaseScimResource> searchGroups(String filter, String sortBy, SortOrder sortOrder, int startIndex,
-			int count, String groupsUrl, String usersUrl, int maxCount) throws Exception {
+			int count, String groupsUrl, String usersUrl, int maxCount, boolean fillMembersDisplay) throws Exception {
 
 		Filter ldapFilter = scimFilterParserService.createFilter(filter, Filter.createPresenceFilter("inum"), GroupResource.class);
 		log.info("Executing search for groups using: ldapfilter '{}', sortBy '{}', sortOrder '{}', startIndex '{}', count '{}'",
@@ -303,7 +351,7 @@ public class Scim2GroupService implements Serializable {
 
 		for (GluuGroup group : list.getEntries()) {
 			GroupResource scimGroup = new GroupResource();
-			transferAttributesToGroupResource(group, scimGroup, groupsUrl, usersUrl);
+			transferAttributesToGroupResource(group, scimGroup, fillMembersDisplay, groupsUrl, usersUrl);
 			resources.add(scimGroup);
 		}
 		log.info("Found {} matching entries - returning {}", list.getTotalEntriesCount(), list.getEntries().size());
@@ -315,6 +363,18 @@ public class Scim2GroupService implements Serializable {
 		return result;
 
 	}
+        
+        public boolean membersDisplayInPath(String strPath) {
+            
+            List<String> paths = Arrays.asList(strPath.replaceAll("\\s", "").split(","));
+            String prefix = ScimResourceUtil.getDefaultSchemaUrn(GroupResource.class) + ":";
+            String parent = "members";
+            String path = parent + ".display";
+            
+            return Stream.of(parent, path, prefix + parent, prefix + path)
+                    .filter(paths::contains).findFirst().isPresent();
+
+        }
 
 	private void syncMemberAttributeInPerson(String groupDn, List<String> beforeMemberDns,
 			List<String> afterMemberDns) {
@@ -344,7 +404,7 @@ public class Scim2GroupService implements Serializable {
 					gluuPerson.setMemberOf(memberOf);
 					personService.updatePerson(gluuPerson);
 				} catch (Exception e) {
-					log.error("An error occurred while removing user {} from group {}", dn, groupDn);
+					log.error("An error occurred while removing group {} from user {}", groupDn, dn);
 					log.error(e.getMessage(), e);
 				}
 			}
@@ -365,7 +425,7 @@ public class Scim2GroupService implements Serializable {
 					gluuPerson.setMemberOf(memberOf);
 					personService.updatePerson(gluuPerson);
 				} catch (Exception e) {
-					log.error("An error occurred while adding user {} to group {}", dn, groupDn);
+					log.error("An error occurred while adding group {} to user {}", groupDn, dn);
 					log.error(e.getMessage(), e);
 				}
 			}
