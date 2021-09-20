@@ -56,7 +56,7 @@ public class Scim2PatchService {
 
     public BaseScimResource applyPatchOperation(BaseScimResource resource, PatchOperation operation)
             throws Exception {
-        return applyPatchOperation(resource, operation, str -> false);
+        return applyPatchOperation(resource, operation, filter -> false);
     }
 
     public BaseScimResource applyPatchOperation(BaseScimResource resource, PatchOperation operation,    

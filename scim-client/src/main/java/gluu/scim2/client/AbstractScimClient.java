@@ -32,7 +32,7 @@ import javax.ws.rs.core.MultivaluedMap;
  * class passed in the constructor.</p>
  * <p>When a service method is invoked through an instance obtained by any of the factory methods of
  * {@link gluu.scim2.client.factory.ScimClientFactory ScimClientFactory}, the call is dispatched by the {@link #invoke(Object, Method, Object[]) invoke}
- * method of this class, which properly handles the authorization details in conjuction with the filter
+ * method of this class, which properly handles the authorization details in conjunction with the filter
  * {@link gluu.scim2.client.rest.provider.AuthorizationInjectionFilter AuthorizationInjectionFilter}.</p>
  * <p>Concrete subclasses of this class must provide {@link #getAuthenticationHeader() getAuthenticationHeader} and
  * {@link #authorize(Response) authorize} methods that must implement specific ways to obtain access tokens depending

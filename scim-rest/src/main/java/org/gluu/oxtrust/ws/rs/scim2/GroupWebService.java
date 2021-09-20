@@ -406,6 +406,7 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             //Fill group instance with all info from gluuGroup
             scim2GroupService.transferAttributesToGroupResource(gluuGroup, group,
                 !skipValidation, endpointUrl, usersUrl);
+            GroupResource original = (GroupResource) ScimResourceUtil.clone(group);
 
             Predicate<String> p = skipValidation ? selectionFilterSkipPredicate : (filter -> false);
             //Apply patches one by one in sequence
@@ -413,6 +414,9 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
                 group = (GroupResource) scim2PatchService.applyPatchOperation(group, po, p);
             }
 
+            if (!displayExcluded) {
+                scim2GroupService.restoreMembersDisplay(original, group);
+            }
             //Throws exception if final representation does not pass overall validation
             log.debug("patchGroup. Revising final resource representation still passes validations");
             executeDefaultValidation(group);
