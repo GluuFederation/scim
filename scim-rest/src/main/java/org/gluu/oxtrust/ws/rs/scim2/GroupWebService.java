@@ -163,7 +163,7 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             
             // empty externalId, no place to store it in LDAP
             group.setExternalId(null);
-            executeDefaultValidation(group);
+            executeValidation(group);
             checkDisplayNameExistence(group.getDisplayName());
             assignMetaInformation(group);
 
@@ -414,15 +414,15 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
                 group = (GroupResource) scim2PatchService.applyPatchOperation(group, po, p);
             }
 
+            log.debug("patchGroup. Revising final resource representation still passes validations");
+            //Throw exception if final representation does not pass overall validation
+            executeValidation(group);
+            //Update timestamp
+            group.getMeta().setLastModified(DateUtil.millisToISOString(System.currentTimeMillis()));
+
             if (!displayExcluded) {
                 scim2GroupService.restoreMembersDisplay(original, group);
             }
-            //Throws exception if final representation does not pass overall validation
-            log.debug("patchGroup. Revising final resource representation still passes validations");
-            executeDefaultValidation(group);
-
-            //Update timestamp
-            group.getMeta().setLastModified(DateUtil.millisToISOString(System.currentTimeMillis()));
 
             //Replaces the information found in gluuGroup with the contents of group
             scim2GroupService.replaceGroupInfo(gluuGroup, group, skipValidation, !displayExcluded,

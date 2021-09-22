@@ -145,7 +145,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
         try {
             log.debug("Executing web service method. createUser");
 
-            executeDefaultValidation(user);
+            executeValidation(user);
             checkUidExistence(user.getUserName());
             assignMetaInformation(user);
             ScimResourceUtil.adjustPrimarySubAttributes(user);
@@ -384,7 +384,7 @@ public class UserWebService extends BaseScimWebService implements IUserWebServic
 
             //Throws exception if final representation does not pass overall validation
             log.debug("patchUser. Revising final resource representation still passes validations");
-            executeDefaultValidation(user);
+            executeValidation(user);
             ScimResourceUtil.adjustPrimarySubAttributes(user);
 
             //Update timestamp

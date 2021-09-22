@@ -82,9 +82,9 @@ public class Scim2GroupService implements Serializable {
      * @param altered Modified object 
      */
     public void restoreMembersDisplay(GroupResource trusted, GroupResource altered) {
-        
-        int aSize = Optional.ofNullable(altered.getMembers()).map(Set::size).orElse(0);
-        int tSize = Optional.ofNullable(trusted.getMembers()).map(Set::size).orElse(0);
+
+        int aSize = membersCount(altered);
+        int tSize = membersCount(trusted);
         if (aSize > 0 && tSize > 0) {
 
             Map<String, String> map = trusted.getMembers().stream().filter(m -> m.getDisplay() != null)
@@ -270,7 +270,7 @@ public class Scim2GroupService implements Serializable {
 			}
 			groupService.addGroup(gluuGroup);
 			syncMemberAttributeInPerson(gluuGroup.getDn(), Collections.emptySet(),
-                                setFromList(gluuGroup.getMembers()));
+                                memberIDsSet(gluuGroup));
 
 			// Copy back to group the info from gluuGroup
 			transferAttributesToGroupResource(gluuGroup, group, fillMembersDisplay,
@@ -282,7 +282,7 @@ public class Scim2GroupService implements Serializable {
 			// We are ignoring the id value received (group.getId())
 			group.setId(gluuGroup.getInum());
 			syncMemberAttributeInPerson(gluuGroup.getDn(), Collections.emptySet(),
-                                setFromList(gluuGroup.getMembers()));
+                                memberIDsSet(gluuGroup));
 		}
 
 	}
@@ -308,10 +308,10 @@ public class Scim2GroupService implements Serializable {
 		GroupResource tmpGroup = new GroupResource();
 		transferAttributesToGroupResource(gluuGroup, tmpGroup, !skipMembersValidation,
                         groupsUrl, usersUrl);
-		tmpGroup.getMeta().setLastModified(DateUtil.millisToISOString(System.currentTimeMillis()));
 
 		GroupResource res = (GroupResource) ScimResourceUtil.transferToResourceReplace(
                         group, tmpGroup, extService.getResourceExtensions(group.getClass()));
+		res.getMeta().setLastModified(DateUtil.millisToISOString(System.currentTimeMillis()));
                 
                 if (fillMembersDisplay) {
                     restoreMembersDisplay(tmpGroup, res);
@@ -345,7 +345,7 @@ public class Scim2GroupService implements Serializable {
                 boolean skipMembersValidation, boolean fillMembersDisplay, String groupsUrl,
                 String usersUrl) throws Exception {
 
-            Set<String> olderMembers = setFromList(gluuGroup.getMembers());
+            Set<String> olderMembers = memberIDsSet(gluuGroup);
 		transferAttributesToGroup(group, gluuGroup, skipMembersValidation,
                         fillMembersDisplay, usersUrl);
 		log.debug("replaceGroupInfo. Updating group info in LDAP");
@@ -359,7 +359,7 @@ public class Scim2GroupService implements Serializable {
 
 			groupService.updateGroup(gluuGroup);
 			syncMemberAttributeInPerson(gluuGroup.getDn(), olderMembers,
-                                setFromList(gluuGroup.getMembers()));
+                                memberIDsSet(gluuGroup));
 
 			// Copy back to user the info from gluuGroup
 			transferAttributesToGroupResource(gluuGroup, group, fillMembersDisplay,
@@ -368,7 +368,7 @@ public class Scim2GroupService implements Serializable {
 		} else {
 			groupService.updateGroup(gluuGroup);
 			syncMemberAttributeInPerson(gluuGroup.getDn(), olderMembers,
-                                setFromList(gluuGroup.getMembers()));
+                                memberIDsSet(gluuGroup));
 		}
 
 	}
@@ -464,9 +464,13 @@ public class Scim2GroupService implements Serializable {
 
 	}
 
-    private static <T> Set<T> setFromList(List<T> list) {
-        return Optional.ofNullable(list).orElse(Collections.emptyList()).stream()
-                .collect(Collectors.toCollection(HashSet::new));
+    private static Set<String> memberIDsSet(GluuGroup gluuGroup) {
+        return Optional.ofNullable(gluuGroup.getMembers()).orElse(Collections.emptyList())
+                .stream().collect(Collectors.toCollection(HashSet::new));
+    }
+
+    private int membersCount(GroupResource res) {
+        return Optional.ofNullable(res.getMembers()).map(Set::size).orElse(0);
     }
     
 }
