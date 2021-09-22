@@ -18,11 +18,13 @@ import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpClient4Engine;
 
-import javax.ws.rs.core.Response;
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.Optional;
+import java.util.stream.Stream;
+
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.MultivaluedMap;
 
 /**
@@ -123,9 +125,11 @@ public abstract class AbstractScimClient<T> implements CloseableClient, Invocati
 
         String methodName = method.getName();
 
-        if (method.getDeclaringClass().equals(CloseableClient.class)) {
-        	// it's a non HTTP-related method
-        	return method.invoke(this, args);
+        if (Stream.of(CloseableClient.class, Object.class).filter(method.getDeclaringClass()::equals)
+                .findFirst().isPresent()) {
+                
+            // it's a non HTTP-related method
+            return method.invoke(this, args);
         } else {
             Response response;
             FreelyAccessible unprotected = method.getAnnotation(FreelyAccessible.class);
@@ -153,8 +157,8 @@ public abstract class AbstractScimClient<T> implements CloseableClient, Invocati
     }
 
     public void close() {
-		logger.info("Closing RestEasy client");
-		clientMap.remove(client);
+        logger.info("Closing RestEasy client");
+        clientMap.remove(client);
     }
 
     public void setCustomHeaders(MultivaluedMap<String, String> headers) {
