@@ -82,10 +82,10 @@ public abstract class AbstractScimClient<T> implements CloseableClient, Invocati
         }
         ResteasyWebTarget target = client.target(domain);
 
-        scimService = target.proxy(serviceClass);
         target.register(ListResponseProvider.class);
         target.register(AuthorizationInjectionFilter.class);
         target.register(ScimResourceProvider.class);
+        scimService = target.proxy(serviceClass);
 
         clientMap.update(client, null);
     }
@@ -125,11 +125,10 @@ public abstract class AbstractScimClient<T> implements CloseableClient, Invocati
 
         String methodName = method.getName();
 
-        if (Stream.of(CloseableClient.class, Object.class).filter(method.getDeclaringClass()::equals)
-                .findFirst().isPresent()) {
-                
+        if (Stream.of(CloseableClient.class, Object.class).anyMatch(method.getDeclaringClass()::equals)) {
             // it's a non HTTP-related method
             return method.invoke(this, args);
+
         } else {
             Response response;
             FreelyAccessible unprotected = method.getAnnotation(FreelyAccessible.class);
