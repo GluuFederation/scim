@@ -103,7 +103,7 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
 
         List<GluuGroup> list = groupService.findGroups(groupToFind, 2);
         if (list != null &&
-            list.stream().filter(g -> !g.getInum().equals(id)).findAny().isPresent()) {
+            list.stream().anyMatch(g -> !g.getInum().equals(id))) {
             throw new DuplicateEntryException("Duplicate group displayName value: " + displayName);
         }
 
@@ -417,6 +417,8 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             log.debug("patchGroup. Revising final resource representation still passes validations");
             //Throw exception if final representation does not pass overall validation
             executeValidation(group);
+            checkDisplayNameExistence(group.getDisplayName(), id);
+
             //Update timestamp
             group.getMeta().setLastModified(DateUtil.millisToISOString(System.currentTimeMillis()));
 
@@ -430,6 +432,9 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
 
             String json = resourceSerializer.serialize(group, attrsList, excludedAttrsList);
             response = Response.ok(new URI(group.getMeta().getLocation())).entity(json).build();
+        } catch (DuplicateEntryException e) {
+            log.error(e.getMessage());
+            response = getErrorResponse(Response.Status.CONFLICT, ErrorScimType.UNIQUENESS, e.getMessage());
         } catch (InvalidAttributeValueException e) {
             log.error(e.getMessage(), e);
             response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.MUTABILITY, e.getMessage());
