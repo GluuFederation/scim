@@ -49,7 +49,6 @@ import org.gluu.oxtrust.service.Fido2DeviceService;
 import org.gluu.oxtrust.service.antlr.scimFilter.ScimFilterParserService;
 import org.gluu.oxtrust.service.filter.ProtectedApi;
 import org.gluu.oxtrust.service.scim2.interceptor.RefAdjusted;
-import org.gluu.oxtrust.service.scim2.UserPersistenceHelper;
 import org.gluu.persist.PersistenceEntryManager;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
@@ -62,9 +61,6 @@ import org.gluu.search.filter.Filter;
 @Named("scim2Fido2DeviceEndpoint")
 @Path("/scim/v2/Fido2Devices")
 public class Fido2DeviceWebService extends BaseScimWebService implements IFido2DeviceWebService {
-
-    @Inject
-    private UserPersistenceHelper userPersistenceHelper;
 
     @Inject
     private Fido2DeviceService fidoDeviceService;
