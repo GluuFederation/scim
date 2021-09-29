@@ -4,7 +4,8 @@ SCIM-Client
 ## Quick start
 
 * [SCIM in test mode](https://www.gluu.org/docs/gluu-server/user-management/scim2/#testing-with-the-scim-client)
-* [SCIM protected by UMA (default)](https://www.gluu.org/docs/gluu-server/user-management/scim2/#testing-with-the-scim-client-uma)
+* [SCIM protected by OAuth2 (default)](https://www.gluu.org/docs/gluu-server/user-management/scim2/#java-client)
+* [SCIM protected by UMA](https://www.gluu.org/docs/gluu-server/user-management/scim2/#testing-with-the-scim-client-uma)
 
 ## How to run tests
 
