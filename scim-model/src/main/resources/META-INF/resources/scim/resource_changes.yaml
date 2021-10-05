@@ -1,7 +1,11 @@
 swagger: '2.0'
 
 info:
+<<<<<<< HEAD
   version: "4.2.2"
+=======
+  version: "5.0.0"
+>>>>>>> master
   title: Modified Gluu users
   description: |
     Use this service to obtain the user entries that have been created or changed after a certain time stamp.

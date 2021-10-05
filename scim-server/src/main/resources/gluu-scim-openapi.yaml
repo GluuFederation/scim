@@ -7,11 +7,16 @@ info:
   license:
     name: Apache 2
     url: https://github.com/GluuFederation/scim/blob/master/LICENSE
+<<<<<<< HEAD
   version: 4.3.0
+=======
+  version: 5.0.0
+>>>>>>> master
 servers:
 - url: https://your.gluu.server.com/identity/restv1/scim/v2
 tags:
 - name: user
+<<<<<<< HEAD
   description: Endpoints for management of User resources
 - name: group
   description: Endpoints for management of Group resources
@@ -21,6 +26,11 @@ tags:
   description: Endpoints for management of Fido2 devices
 - name: global search
   description: Search from service root
+=======
+  description: Endpoints for management of the User resource
+- name: group
+  description: Endpoints for management of the Group resource
+>>>>>>> master
 - name: discovery
   description: Endpoints to facilitate discovery of SCIM service provider features
 paths:
@@ -28,6 +38,7 @@ paths:
     get:
       tags:
       - group
+<<<<<<< HEAD
       operationId: get-groups
       description: Query Group resources (see section 3.4.2 of RFC 7644)
       security:
@@ -36,15 +47,29 @@ paths:
       - name: attributes
         in: query
         description: A comma-separated list of attribute names to return in the response
+=======
+      description: Query Group resources (see section 3.4.2 of RFC 7644)
+      security:
+        - testmode: []
+      parameters:
+      - name: attributes
+        in: query
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: excludedAttributes
         in: query
+<<<<<<< HEAD
         description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
+=======
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: filter
         in: query
+<<<<<<< HEAD
         description: An expression specifying the search criteria. See section 3.4.2.2 of RFC 7644
         schema:
           type: string
@@ -52,21 +77,38 @@ paths:
       - name: startIndex
         in: query
         description: The 1-based index of the first query result
+=======
+        description: See section 3.4.2.2 of RFC 7644
+        schema:
+          type: string
+      - name: startIndex
+        in: query
+>>>>>>> master
         schema:
           type: integer
       - name: count
         in: query
+<<<<<<< HEAD
         description: Specifies the desired maximum number of query results per page
+=======
+>>>>>>> master
         schema:
           type: integer
       - name: sortBy
         in: query
+<<<<<<< HEAD
         description: The attribute whose value will be used to order the returned responses
         schema:
           type: string
       - name: sortOrder
         in: query
         description: Order in which the sortBy param is applied. Allowed values are "ascending" and "descending"
+=======
+        schema:
+          type: string
+      - name: sortOder
+        in: query
+>>>>>>> master
         schema:
           type: string
       responses:
@@ -101,6 +143,7 @@ paths:
     post:
       tags:
       - group
+<<<<<<< HEAD
       operationId: create-group
       description: Allows creating a Group resource via POST (see section 3.3 of RFC
         7644)
@@ -110,11 +153,25 @@ paths:
       - name: attributes
         in: query
         description: A comma-separated list of attribute names to return in the response
+=======
+      description: Allows creating a Group resource via POST (see section 3.3 of RFC
+        7644)
+      security:
+        - testmode: []
+      parameters:
+      - name: attributes
+        in: query
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: excludedAttributes
         in: query
+<<<<<<< HEAD
         description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
+=======
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       requestBody:
@@ -170,6 +227,7 @@ paths:
     get:
       tags:
       - group
+<<<<<<< HEAD
       operationId: get-group-by-id
       description: Retrieves a Group resource by Id (see section 3.4.1 of RFC 7644)
       security:
@@ -178,11 +236,24 @@ paths:
       - name: attributes
         in: query
         description: A comma-separated list of attribute names to return in the response
+=======
+      description: Retrieves a Group resource by Id (see section 3.4.1 of RFC 7644)
+      security:
+        - testmode: []
+      parameters:
+      - name: attributes
+        in: query
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: excludedAttributes
         in: query
+<<<<<<< HEAD
         description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
+=======
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: id
@@ -221,22 +292,37 @@ paths:
     put:
       tags:
       - group
+<<<<<<< HEAD
       operationId: update-group-by-id
+=======
+>>>>>>> master
       description: "Updates a Group resource (see section 3.5.1 of RFC 7644). Update\
         \ works in a replacement fashion&amp;#58; every\nattribute value found in the\
         \ payload sent will replace the one in the existing resource representation.\
         \ Attributes \nnot passed in the payload will be left intact.\n"
       security:
+<<<<<<< HEAD
         - scim_oauth: [https://gluu.org/scim/groups.write]
       parameters:
       - name: attributes
         in: query
         description: A comma-separated list of attribute names to return in the response
+=======
+        - testmode: []
+      parameters:
+      - name: attributes
+        in: query
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: excludedAttributes
         in: query
+<<<<<<< HEAD
         description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
+=======
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: id
@@ -307,10 +393,16 @@ paths:
     delete:
       tags:
       - group
+<<<<<<< HEAD
       operationId: delete-group-by-id
       description: Deletes a group resource (see section 3.6 of RFC 7644)
       security:
         - scim_oauth: [https://gluu.org/scim/groups.write]
+=======
+      description: Deletes a group resource (see section 3.6 of RFC 7644)
+      security:
+        - testmode: []
+>>>>>>> master
       parameters:
       - name: id
         in: path
@@ -343,21 +435,36 @@ paths:
     patch:
       tags:
       - group
+<<<<<<< HEAD
       operationId: patch-group-by-id
+=======
+>>>>>>> master
       description: "Updates one or more attributes of a Group resource using a sequence\
         \ of additions, removals, and \nreplacements operations. See section 3.5.2\
         \ of RFC 7644\n"
       security:
+<<<<<<< HEAD
         - scim_oauth: [https://gluu.org/scim/groups.write]
       parameters:
       - name: attributes
         in: query
         description: A comma-separated list of attribute names to return in the response
+=======
+        - testmode: []
+      parameters:
+      - name: attributes
+        in: query
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: excludedAttributes
         in: query
+<<<<<<< HEAD
         description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
+=======
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: id
@@ -411,10 +518,16 @@ paths:
     post:
       tags:
       - group
+<<<<<<< HEAD
       operationId: search-group
       description: Query Group resources (see section 3.4.2 of RFC 7644)
       security:
         - scim_oauth: [https://gluu.org/scim/groups.read]
+=======
+      description: Query Group resources (see section 3.4.2 of RFC 7644)
+      security:
+        - testmode: []
+>>>>>>> master
       requestBody:
         description: Payload that represents the search criteria
         content:
@@ -458,6 +571,7 @@ paths:
       x-codegen-request-body-name: searchRequest
   /FidoDevices:
     get:
+<<<<<<< HEAD
       tags:
         - fido devices
       operationId: get-fido-devices
@@ -468,11 +582,24 @@ paths:
       - name: attributes
         in: query
         description: A comma-separated list of attribute names to return in the response
+=======
+      description: Query Fido resources
+      security:
+        - testmode: []
+      parameters:
+      - name: attributes
+        in: query
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: excludedAttributes
         in: query
+<<<<<<< HEAD
         description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
+=======
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: userId
@@ -483,28 +610,45 @@ paths:
           type: string
       - name: filter
         in: query
+<<<<<<< HEAD
         description: An expression specifying the search criteria. See section 3.4.2.2 of RFC 7644
         example: status eq "compromised"
+=======
+        description: See section 3.4.2.2 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: startIndex
         in: query
+<<<<<<< HEAD
         description: The 1-based index of the first query result
+=======
+>>>>>>> master
         schema:
           type: integer
       - name: count
         in: query
+<<<<<<< HEAD
         description: Specifies the desired maximum number of query results per page
+=======
+>>>>>>> master
         schema:
           type: integer
       - name: sortBy
         in: query
+<<<<<<< HEAD
         description: The attribute whose value will be used to order the returned responses
         schema:
           type: string
       - name: sortOrder
         in: query
         description: Order in which the sortBy param is applied. Allowed values are "ascending" and "descending"
+=======
+        schema:
+          type: string
+      - name: sortOder
+        in: query
+>>>>>>> master
         schema:
           type: string
       responses:
@@ -547,6 +691,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
   /FidoDevices/{id}:
     get:
+<<<<<<< HEAD
       tags:
         - fido devices
       operationId: get-fido-device-by-id
@@ -557,16 +702,29 @@ paths:
       - name: attributes
         in: query
         description: A comma-separated list of attribute names to return in the response
+=======
+      description: Retrieves a U2F/Super Gluu device by Id
+      security:
+        - testmode: []
+      parameters:
+      - name: attributes
+        in: query
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: excludedAttributes
         in: query
+<<<<<<< HEAD
         description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
         schema:
           type: string
       - name: userId
         in: query
         description: Identifier (inum) of the device owner. This param is not required when underlying database is LDAP
+=======
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: id
@@ -603,24 +761,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
     put:
+<<<<<<< HEAD
       tags:
         - fido devices
       operationId: update-fido-device-by-id
+=======
+>>>>>>> master
       description: "Updates a Fido resource. Update works in a replacement fashion&amp;#58;\
         \ every\nattribute value found in the payload sent will replace the one in\
         \ the existing resource representation. Attributes \nnot passed in the payload\
         \ will be left intact.\n"
       security:
+<<<<<<< HEAD
         - scim_oauth: [https://gluu.org/scim/fido.write]
       parameters:
       - name: attributes
         in: query
         description: A comma-separated list of attribute names to return in the response
+=======
+        - testmode: []
+      parameters:
+      - name: attributes
+        in: query
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: excludedAttributes
         in: query
+<<<<<<< HEAD
         description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
+=======
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: id
@@ -679,12 +852,18 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
       x-codegen-request-body-name: fidoDeviceResource
     delete:
+<<<<<<< HEAD
       tags:
         - fido devices
       operationId: delete-fido-device-by-id
       description: Deletes a Fido resource
       security:
         - scim_oauth: [https://gluu.org/scim/fido.write]
+=======
+      description: Deletes a Fido resource
+      security:
+        - testmode: []
+>>>>>>> master
       parameters:
       - name: id
         in: path
@@ -716,12 +895,18 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
   /FidoDevices/.search:
     post:
+<<<<<<< HEAD
       tags:
         - fido devices
       operationId: search-fido-device
       description: Query Fido resources
       security:
         - scim_oauth: [https://gluu.org/scim/fido.read]
+=======
+      description: Query Fido resources
+      security:
+        - testmode: []
+>>>>>>> master
       parameters:
       - name: userId
         in: query
@@ -781,6 +966,7 @@ paths:
       x-codegen-request-body-name: searchRequest
   /Fido2Devices:
     get:
+<<<<<<< HEAD
       tags:
         - fido2 devices
       operationId: get-fido2-devices
@@ -791,11 +977,24 @@ paths:
       - name: attributes
         in: query
         description: A comma-separated list of attribute names to return in the response
+=======
+      description: Query Fido 2 resources
+      security:
+        - testmode: []
+      parameters:
+      - name: attributes
+        in: query
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: excludedAttributes
         in: query
+<<<<<<< HEAD
         description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
+=======
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: userId
@@ -806,28 +1005,45 @@ paths:
           type: string
       - name: filter
         in: query
+<<<<<<< HEAD
         description: An expression specifying the search criteria. See section 3.4.2.2 of RFC 7644
         example: userId sw "123-abcde-qwerty"
+=======
+        description: See section 3.4.2.2 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: startIndex
         in: query
+<<<<<<< HEAD
         description: The 1-based index of the first query result
+=======
+>>>>>>> master
         schema:
           type: integer
       - name: count
         in: query
+<<<<<<< HEAD
         description: Specifies the desired maximum number of query results per page
+=======
+>>>>>>> master
         schema:
           type: integer
       - name: sortBy
         in: query
+<<<<<<< HEAD
         description: The attribute whose value will be used to order the returned responses
         schema:
           type: string
       - name: sortOrder
         in: query
         description: Order in which the sortBy param is applied. Allowed values are "ascending" and "descending"
+=======
+        schema:
+          type: string
+      - name: sortOder
+        in: query
+>>>>>>> master
         schema:
           type: string
       responses:
@@ -870,6 +1086,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
   /Fido2Devices/{id}:
     get:
+<<<<<<< HEAD
       tags:
         - fido2 devices
       operationId: get-fido2-device-by-id
@@ -880,16 +1097,29 @@ paths:
       - name: attributes
         in: query
         description: A comma-separated list of attribute names to return in the response
+=======
+      description: Retrieves a Fido 2 device by Id
+      security:
+        - testmode: []
+      parameters:
+      - name: attributes
+        in: query
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: excludedAttributes
         in: query
+<<<<<<< HEAD
         description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
         schema:
           type: string
       - name: userId
         in: query
         description: Identifier (inum) of the device owner. This param is not required when underlying database is LDAP
+=======
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: id
@@ -926,24 +1156,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
     put:
+<<<<<<< HEAD
       tags:
         - fido2 devices
       operationId: update-fido2-device-by-id
+=======
+>>>>>>> master
       description: "Updates a Fido 2 resource. Update works in a replacement fashion&amp;#58;\
         \ every\nattribute value found in the payload sent will replace the one in\
         \ the existing resource representation. Attributes \nnot passed in the payload\
         \ will be left intact.\n"
       security:
+<<<<<<< HEAD
         - scim_oauth: [https://gluu.org/scim/fido2.write]
       parameters:
       - name: attributes
         in: query
         description: A comma-separated list of attribute names to return in the response
+=======
+        - testmode: []
+      parameters:
+      - name: attributes
+        in: query
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: excludedAttributes
         in: query
+<<<<<<< HEAD
         description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
+=======
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: id
@@ -1002,12 +1247,18 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
       x-codegen-request-body-name: fidoDeviceResource
     delete:
+<<<<<<< HEAD
       tags:
         - fido2 devices
       operationId: delete-fido2-device-by-id
       description: Deletes a Fido 2 resource
       security:
         - scim_oauth: [https://gluu.org/scim/fido2.write]
+=======
+      description: Deletes a Fido 2 resource
+      security:
+        - testmode: []
+>>>>>>> master
       parameters:
       - name: id
         in: path
@@ -1039,12 +1290,18 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
   /Fido2Devices/.search:
     post:
+<<<<<<< HEAD
       tags:
         - fido2 devices
       operationId: search-fido2-device
       description: Query Fido 2 resources
       security:
         - scim_oauth: [https://gluu.org/scim/fido2.read]
+=======
+      description: Query Fido 2 resources
+      security:
+        - testmode: []
+>>>>>>> master
       parameters:
       - name: userId
         in: query
@@ -1106,6 +1363,7 @@ paths:
     get:
       tags:
       - user
+<<<<<<< HEAD
       operationId: get-users
       description: Query User resources (see section 3.4.2 of RFC 7644)
       security:
@@ -1114,37 +1372,67 @@ paths:
       - name: attributes
         in: query
         description: A comma-separated list of attribute names to return in the response
+=======
+      description: Query User resources (see section 3.4.2 of RFC 7644)
+      security:
+        - testmode: []
+      parameters:
+      - name: attributes
+        in: query
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: excludedAttributes
         in: query
+<<<<<<< HEAD
         description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
+=======
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: filter
         in: query
+<<<<<<< HEAD
         description: An expression specifying the search criteria. See section 3.4.2.2 of RFC 7644
         example: userName eq "jhon" and meta.lastModified gt "2011-05-13T04:42:34Z"
+=======
+        description: See section 3.4.2.2 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: startIndex
         in: query
+<<<<<<< HEAD
         description: The 1-based index of the first query result
+=======
+>>>>>>> master
         schema:
           type: integer
       - name: count
         in: query
+<<<<<<< HEAD
         description: Specifies the desired maximum number of query results per page
+=======
+>>>>>>> master
         schema:
           type: integer
       - name: sortBy
         in: query
+<<<<<<< HEAD
         description: The attribute whose value will be used to order the returned responses
         schema:
           type: string
       - name: sortOrder
         in: query
         description: Order in which the sortBy param is applied. Allowed values are "ascending" and "descending"
+=======
+        schema:
+          type: string
+      - name: sortOder
+        in: query
+>>>>>>> master
         schema:
           type: string
       responses:
@@ -1179,6 +1467,7 @@ paths:
     post:
       tags:
       - user
+<<<<<<< HEAD
       operationId: create-user
       description: Allows creating a User resource via POST (see section 3.3 of RFC
         7644)
@@ -1188,11 +1477,25 @@ paths:
       - name: attributes
         in: query
         description: A comma-separated list of attribute names to return in the response
+=======
+      description: Allows creating a User resource via POST (see section 3.3 of RFC
+        7644)
+      security:
+        - testmode: []
+      parameters:
+      - name: attributes
+        in: query
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: excludedAttributes
         in: query
+<<<<<<< HEAD
         description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
+=======
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       requestBody:
@@ -1248,6 +1551,7 @@ paths:
     get:
       tags:
       - user
+<<<<<<< HEAD
       operationId: get-user-by-id
       description: Retrieves a User resource by Id (see section 3.4.1 of RFC 7644)
       security:
@@ -1256,11 +1560,24 @@ paths:
       - name: attributes
         in: query
         description: A comma-separated list of attribute names to return in the response
+=======
+      description: Retrieves a User resource by Id (see section 3.4.1 of RFC 7644)
+      security:
+        - testmode: []
+      parameters:
+      - name: attributes
+        in: query
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: excludedAttributes
         in: query
+<<<<<<< HEAD
         description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
+=======
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: id
@@ -1299,22 +1616,37 @@ paths:
     put:
       tags:
       - user
+<<<<<<< HEAD
       operationId: update-user-by-id
+=======
+>>>>>>> master
       description: "Updates a User resource (see section 3.5.1 of RFC 7644). Update\
         \ works in a replacement fashion&amp;#58; every\nattribute value found in the\
         \ payload sent will replace the one in the existing resource representation.\
         \ Attributes \nnot passed in the payload will be left intact.\n"
       security:
+<<<<<<< HEAD
         - scim_oauth: [https://gluu.org/scim/users.write]
       parameters:
       - name: attributes
         in: query
         description: A comma-separated list of attribute names to return in the response
+=======
+        - testmode: []
+      parameters:
+      - name: attributes
+        in: query
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: excludedAttributes
         in: query
+<<<<<<< HEAD
         description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
+=======
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: id
@@ -1385,10 +1717,16 @@ paths:
     delete:
       tags:
       - user
+<<<<<<< HEAD
       operationId: delete-user-by-id
       description: Deletes a user resource
       security:
         - scim_oauth: [https://gluu.org/scim/users.write]
+=======
+      description: Deletes a user resource
+      security:
+        - testmode: []
+>>>>>>> master
       parameters:
       - name: id
         in: path
@@ -1421,21 +1759,36 @@ paths:
     patch:
       tags:
       - user
+<<<<<<< HEAD
       operationId: patch-user-by-id
+=======
+>>>>>>> master
       description: "Updates one or more attributes of a User resource using a sequence\
         \ of additions, removals, and \nreplacements operations. See section 3.5.2\
         \ of RFC 7644\n"
       security:
+<<<<<<< HEAD
         - scim_oauth: [https://gluu.org/scim/users.write]
       parameters:
       - name: attributes
         in: query
         description: A comma-separated list of attribute names to return in the response
+=======
+        - testmode: []
+      parameters:
+      - name: attributes
+        in: query
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: excludedAttributes
         in: query
+<<<<<<< HEAD
         description: When specified, the response will contain a default set of attributes minus those listed here (as a comma-separated list)
+=======
+        description: See section 3.9 of RFC 7644
+>>>>>>> master
         schema:
           type: string
       - name: id
@@ -1489,10 +1842,16 @@ paths:
     post:
       tags:
       - user
+<<<<<<< HEAD
       operationId: search-user
       description: Query User resources (see section 3.4.2 of RFC 7644)
       security:
         - scim_oauth: [https://gluu.org/scim/users.read]
+=======
+      description: Query User resources (see section 3.4.2 of RFC 7644)
+      security:
+        - testmode: []
+>>>>>>> master
       requestBody:
         description: Payload that represents the search criteria
         content:
@@ -1538,11 +1897,16 @@ paths:
     post:
       description: |
         Search (from system root) for one or more resource (see section 3.4.3 of RFC 7644)
+<<<<<<< HEAD
       tags:
         - global search
       operationId: search-resources
       security:
         - scim_oauth: [https://gluu.org/scim/all-resources.search]
+=======
+      security:
+        - testmode: []
+>>>>>>> master
       requestBody:
         description: Payload that represents the search criteria
         content:
@@ -1589,7 +1953,11 @@ paths:
       description: Send several resource operations in a single request (see section
         3.7 of RFC 7644)
       security:
+<<<<<<< HEAD
         - scim_oauth: [https://gluu.org/scim/bulk]
+=======
+        - testmode: []
+>>>>>>> master
       requestBody:
         description: Payload describing the operations to perform
         content:
@@ -1626,7 +1994,10 @@ paths:
     get:
       tags:
       - discovery
+<<<<<<< HEAD
       operationId: get-service-provider-config
+=======
+>>>>>>> master
       description: Describes the SCIM specification features available (see section
         5 of RFC 7644)
       responses:
@@ -1636,17 +2007,32 @@ paths:
             application/scim+json:
               schema:
                 $ref: '#/components/schemas/ServiceProviderConfigResponse'
+<<<<<<< HEAD
+=======
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceProviderConfigResponse'
+>>>>>>> master
         500:
           description: There was an unexpected failure executing the operation
           content:
             application/scim+json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+<<<<<<< HEAD
+=======
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+>>>>>>> master
   /ResourceTypes:
     get:
       tags:
       - discovery
+<<<<<<< HEAD
       operationId: get-resource-types
+=======
+>>>>>>> master
       description: |
         This endpoint is used to discover the types of resources available (see section 4 of RFC 7644)
       responses:
@@ -1656,17 +2042,32 @@ paths:
             application/scim+json:
               schema:
                 $ref: '#/components/schemas/ResourceTypeListResponse'
+<<<<<<< HEAD
+=======
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceTypeListResponse'
+>>>>>>> master
         500:
           description: There was an unexpected failure executing the operation
           content:
             application/scim+json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+<<<<<<< HEAD
+=======
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+>>>>>>> master
   /ResourceTypes/{resource}:
     get:
       tags:
       - discovery
+<<<<<<< HEAD
       operationId: get-resource-type-by-id
+=======
+>>>>>>> master
       description: "Describes the endpoint, schemas and extensions supported by a\
         \ specific kind of resource.\nIt returns a specific portion of the ouput of\
         \ the more general /Resources endpoint  \n"
@@ -1688,17 +2089,32 @@ paths:
             application/scim+json:
               schema:
                 $ref: '#/components/schemas/ResourceType'
+<<<<<<< HEAD
+=======
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceType'
+>>>>>>> master
         500:
           description: There was an unexpected failure executing the operation
           content:
             application/scim+json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+<<<<<<< HEAD
+=======
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+>>>>>>> master
   /Schemas:
     get:
       tags:
       - discovery
+<<<<<<< HEAD
       operationId: get-schemas
+=======
+>>>>>>> master
       description: "Endpoint used to retrieve information about schemas supported\
         \ (see section \n4 of RFC 7644)\n"
       responses:
@@ -1708,17 +2124,32 @@ paths:
             application/scim+json:
               schema:
                 $ref: '#/components/schemas/SchemaListResponse'
+<<<<<<< HEAD
+=======
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaListResponse'
+>>>>>>> master
         500:
           description: There was an unexpected failure executing the operation
           content:
             application/scim+json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+<<<<<<< HEAD
+=======
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+>>>>>>> master
   /Schemas/{uri}:
     get:
       tags:
       - discovery
+<<<<<<< HEAD
       operationId: get-schema-by-uri
+=======
+>>>>>>> master
       description: Retrieves information about a specific resource
       parameters:
       - name: uri
@@ -1740,12 +2171,24 @@ paths:
             application/scim+json:
               schema:
                 $ref: '#/components/schemas/SchemaResource'
+<<<<<<< HEAD
+=======
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaResource'
+>>>>>>> master
         500:
           description: There was an unexpected failure executing the operation
           content:
             application/scim+json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+<<<<<<< HEAD
+=======
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+>>>>>>> master
 components:
   schemas:
     AnyValue:
@@ -1760,16 +2203,23 @@ components:
             example: urn:ietf:params:scim:api:messages:2.0:SearchRequest
         attributes:
           type: array
+<<<<<<< HEAD
           description: A list of attribute names to return in the response
+=======
+>>>>>>> master
           items:
             type: string
         excludedAttributes:
           type: array
+<<<<<<< HEAD
           description: When specified, the response will contain a default set of attributes minus those listed here
+=======
+>>>>>>> master
           items:
             type: string
         filter:
           type: string
+<<<<<<< HEAD
           description: An expression specifying the search criteria. See section 3.4.2.2 of RFC 7644
           example: userName eq "jhon" and meta.lastModified gt "2011-05-13T04:42:34Z"
         sortBy:
@@ -1784,6 +2234,16 @@ components:
         count:
           type: integer
           description: Specifies the desired maximum number of query results per page
+=======
+        sortBy:
+          type: string
+        sortOrder:
+          type: string
+        startIndex:
+          type: integer
+        count:
+          type: integer
+>>>>>>> master
       description: See section 3.4.3 of RFC 7644
     ErrorResponse:
       required:
@@ -1797,6 +2257,7 @@ components:
             example: urn:ietf:params:scim:api:messages:2.0:Error
         status:
           type: string
+<<<<<<< HEAD
           description: HTTP status code as string
         scimType:
           type: string
@@ -1804,6 +2265,12 @@ components:
         detail:
           type: string
           description: A detailed human-readable message of the error
+=======
+        scimType:
+          type: string
+        detail:
+          type: string
+>>>>>>> master
       description: See section 3.12 of RFC 7644
     ServiceProviderConfigResponse:
       type: object
@@ -1978,6 +2445,7 @@ components:
             example: urn:ietf:params:scim:api:messages:2.0:ListResponse
         totalResults:
           type: integer
+<<<<<<< HEAD
           description: Total number of results returned by the search. The value may be larger than the number of resources returned due to pagination
         startIndex:
           type: integer
@@ -1987,6 +2455,14 @@ components:
           description: The number of resources returned in a results page
     GroupListResponse:
       description: Results for groups search. See section 3.4.2.4 of RFC 7644
+=======
+        startIndex:
+          type: integer
+        itemsPerPage:
+          type: integer
+    GroupListResponse:
+      description: See section 3.4.2.4 of RFC 7644
+>>>>>>> master
       allOf:
       - $ref: '#/components/schemas/BasicListResponse'
       - type: object
@@ -1997,7 +2473,10 @@ components:
             items:
               $ref: '#/components/schemas/GroupResource'
     FidoListResponse:
+<<<<<<< HEAD
       description: Results for fido devices search
+=======
+>>>>>>> master
       allOf:
       - $ref: '#/components/schemas/BasicListResponse'
       - type: object
@@ -2008,7 +2487,10 @@ components:
             items:
               $ref: '#/components/schemas/FidoDeviceResource'
     Fido2ListResponse:
+<<<<<<< HEAD
       description: Results for fido 2 devices search
+=======
+>>>>>>> master
       allOf:
       - $ref: '#/components/schemas/BasicListResponse'
       - type: object
@@ -2019,7 +2501,11 @@ components:
             items:
               $ref: '#/components/schemas/Fido2DeviceResource'
     UserListResponse:
+<<<<<<< HEAD
       description: Results for users search. See section 3.4.2.4 of RFC 7644
+=======
+      description: See section 3.4.2.4 of RFC 7644
+>>>>>>> master
       allOf:
       - $ref: '#/components/schemas/BasicListResponse'
       - type: object
@@ -2051,18 +2537,27 @@ components:
               $ref: '#/components/schemas/SchemaResource'
     PatchOperation:
       required:
+<<<<<<< HEAD
       - op
       type: object
       properties:
         op:
           type: string
           description: The kind of operation to perform
+=======
+      - operation
+      type: object
+      properties:
+        operation:
+          type: string
+>>>>>>> master
           enum:
           - add
           - remove
           - replace
         path:
           type: string
+<<<<<<< HEAD
           description: Required when op is remove, optional otherwise
         value:
           $ref: '#/components/schemas/AnyValue'
@@ -2070,6 +2565,14 @@ components:
       description: See section 3.5.2 of RFC 7644
     PatchRequest:
       description: Stores one or more patch operations
+=======
+          description: Required when type is remove, optional otherwise
+        value:
+          $ref: '#/components/schemas/AnyValue'
+          description: Only required when type is add or replace
+      description: See section 3.5.2 of RFC 7644
+    PatchRequest:
+>>>>>>> master
       required:
       - Operations
       type: object
@@ -2095,7 +2598,10 @@ components:
             Used to bind the id generated for a created resource (via POST) to a named variable for later reuse
         path:
           type: string
+<<<<<<< HEAD
           description: Path of the endpoint the operation uses relative to the server root, eg. /Users
+=======
+>>>>>>> master
         data:
           type: object
           properties: {}
@@ -2111,7 +2617,10 @@ components:
       description: See section 3.7 of RFC 7644
     BulkData:
       type: object
+<<<<<<< HEAD
       description: Used to encapsulate one or more succesive SCIM operations in a single request
+=======
+>>>>>>> master
       properties:
         schemas:
           type: array
@@ -2129,7 +2638,10 @@ components:
         properties:
           failOnErrors:
             type: integer
+<<<<<<< HEAD
             description: The number of errors that can be accepted before the Bulk request is terminated and a response is returned
+=======
+>>>>>>> master
     Meta:
       type: object
       properties:
@@ -2141,6 +2653,7 @@ components:
           type: string
         location:
           type: string
+<<<<<<< HEAD
       description: Descriptive information about a resource. See section 3.1 of RFC 7643
     Member:
       type: object
@@ -2158,6 +2671,20 @@ components:
         value:
           type: string
           description: Identifier (ID) of the resource
+=======
+      description: See section 3.1 of RFC 7643
+    Member:
+      type: object
+      properties:
+        $ref:
+          type: string
+        type:
+          type: string
+        display:
+          type: string
+        value:
+          type: string
+>>>>>>> master
     Name:
       type: object
       properties:
@@ -2169,6 +2696,7 @@ components:
           type: string
         honorificPrefix:
           type: string
+<<<<<<< HEAD
           description: A "title" like "Ms.", "Mrs."
         honorificSuffix:
           type: string
@@ -2176,6 +2704,12 @@ components:
         formatted:
           type: string
           description: Full name, including all middle names, titles, and suffixes as appropriate
+=======
+        honorificSuffix:
+          type: string
+        formatted:
+          type: string
+>>>>>>> master
       description: See section 4.1.1 of RFC 7643
     Email:
       type: object
@@ -2190,7 +2724,10 @@ components:
           example: work
         primary:
           type: boolean
+<<<<<<< HEAD
           description: Denotes if this is the preferred e-mail among others, if any
+=======
+>>>>>>> master
       description: See section 4.1.2 of RFC 7643
     PhoneNumber:
       type: object
@@ -2205,7 +2742,10 @@ components:
           example: fax
         primary:
           type: boolean
+<<<<<<< HEAD
           description: Denotes if this is the preferred phone number among others, if any 
+=======
+>>>>>>> master
       description: See section 4.1.2 of RFC 7643
     InstantMessagingAddress:
       type: object
@@ -2219,7 +2759,10 @@ components:
           example: gtalk
         primary:
           type: boolean
+<<<<<<< HEAD
           description: Denotes if this is the preferred messaging addressed among others, if any
+=======
+>>>>>>> master
       description: See section 4.1.2 of RFC 7643
     Photo:
       type: object
@@ -2234,19 +2777,27 @@ components:
           example: thumbnail
         primary:
           type: boolean
+<<<<<<< HEAD
           description: Denotes if this is the preferred photo among others, if any
       description: Points to a resource location representing the user's image. See section 4.1.2 of RFC 7643
+=======
+      description: See section 4.1.2 of RFC 7643
+>>>>>>> master
     Address:
       type: object
       properties:
         formatted:
           type: string
+<<<<<<< HEAD
           description: Full mailing address, formatted for display or use with a mailing label
+=======
+>>>>>>> master
         streetAddress:
           type: string
           example: 56 Acacia Avenue
         locality:
           type: string
+<<<<<<< HEAD
           description: City or locality of the address
         region:
           type: string
@@ -2258,30 +2809,51 @@ components:
           type: string
           description: Country expressed in ISO 3166-1 "alpha-2" code format
           example: UK
+=======
+        region:
+          type: string
+        postalCode:
+          type: string
+        country:
+          type: string
+>>>>>>> master
         type:
           type: string
           example: home
         primary:
           type: boolean
+<<<<<<< HEAD
           description: Denotes if this is the preferred address among others, if any
       description: Physical mailing address for this user. See section 4.1.2 of RFC 7643
+=======
+      description: See section 4.1.2 of RFC 7643
+>>>>>>> master
     Group:
       type: object
       properties:
         value:
           type: string
+<<<<<<< HEAD
           description: Group identifier
           example: 180ee84f0671b1
         $ref:
           type: string
           description: URI associated to the group
+=======
+          example: 180ee84f0671b1
+        $ref:
+          type: string
+>>>>>>> master
           example: https://nsfw.com/scim/restv1/v2/Groups/180ee84f0671b1
         display:
           type: string
           example: Cult managers
         type:
           type: string
+<<<<<<< HEAD
           description: Describes how the group membership was derived
+=======
+>>>>>>> master
           example: direct
       description: See section 4.1.2 of RFC 7643
     Entitlement:
@@ -2296,8 +2868,12 @@ components:
           type: string
         primary:
           type: boolean
+<<<<<<< HEAD
           description: Denotes if this is the preferred entitlement among others, if any
       description: Entitlements represent things a user has, like rights. See section 4.1.2 of RFC 7643
+=======
+      description: See section 4.1.2 of RFC 7643
+>>>>>>> master
     Role:
       type: object
       properties:
@@ -2310,7 +2886,10 @@ components:
           type: string
         primary:
           type: boolean
+<<<<<<< HEAD
           description: Denotes if this is the preferred role among others, if any
+=======
+>>>>>>> master
       description: See section 4.1.2 of RFC 7643
     X509Certificate:
       type: object
@@ -2324,23 +2903,38 @@ components:
           type: string
         primary:
           type: boolean
+<<<<<<< HEAD
           description: Denotes if this is the preferred certificate among others, if any
       description: A certificate associated with the user. See section 4.1.2 of RFC 7643
+=======
+      description: See section 4.1.2 of RFC 7643
+>>>>>>> master
     BaseResource:
       type: object
       properties:
         schemas:
           type: array
+<<<<<<< HEAD
           description: URIs that are used to indicate the namespaces of the SCIM schemas that define the attributes present in the current structure
+=======
+>>>>>>> master
           items:
             type: string
         id:
           type: string
+<<<<<<< HEAD
           description: A unique identifier for a SCIM resource. See section 3.1 of RFC 7643
         meta:
           $ref: '#/components/schemas/Meta'
     GroupResource:
       description: Represents a group resource. See section 4.2 of RFC 7643
+=======
+          description: See section 3.1 of RFC 7643
+        meta:
+          $ref: '#/components/schemas/Meta'
+    GroupResource:
+      description: See section 4.2 of RFC 7643
+>>>>>>> master
       allOf:
       - $ref: '#/components/schemas/BaseResource'
       - type: object
@@ -2348,7 +2942,10 @@ components:
         properties:
           displayName:
             type: string
+<<<<<<< HEAD
             description: Group name suitable for display to end-users
+=======
+>>>>>>> master
           members:
             type: array
             items:
@@ -2395,7 +2992,10 @@ components:
             - compromised
           displayName:
             type: string
+<<<<<<< HEAD
             description: Device name suitable for display to end-users
+=======
+>>>>>>> master
           description:
             type: string
     Fido2DeviceResource:
@@ -2422,9 +3022,14 @@ components:
             - pending
           displayName:
             type: string
+<<<<<<< HEAD
             description: Device name suitable for display to end-users
     UserResource:
       description: Represents a user resource. See section 4.1 of RFC 7643
+=======
+    UserResource:
+      description: See section 4.1 of RFC 7643
+>>>>>>> master
       allOf:
       - $ref: '#/components/schemas/BaseResource'
       - type: object
@@ -2432,14 +3037,21 @@ components:
         properties:
           externalId:
             type: string
+<<<<<<< HEAD
             description: Identifier of the resource useful from the perspective of the provisioning client. See section 3.1 of RFC 7643
           userName:
             type: string
             description: Identifier for the user, typically used by the user to directly authenticate (id and externalId are opaque identifiers generally not known by users)
+=======
+            description: See section 3.1 of RFC 7643
+          userName:
+            type: string
+>>>>>>> master
           name:
             $ref: '#/components/schemas/Name'
           displayName:
             type: string
+<<<<<<< HEAD
             description: Name of the user suitable for display to end-users
           nickName:
             type: string
@@ -2465,6 +3077,22 @@ components:
           timezone:
             type: string
             example: America/Los_Angeles
+=======
+          nickName:
+            type: string
+          profileUrl:
+            type: string
+          title:
+            type: string
+          userType:
+            type: string
+          preferredLanguage:
+            type: string
+          locale:
+            type: string
+          timezone:
+            type: string
+>>>>>>> master
           active:
             type: boolean
           password:
@@ -2526,15 +3154,24 @@ components:
             items:
               $ref: '#/components/schemas/GenericResource'
   securitySchemes:
+<<<<<<< HEAD
     scim_oauth:
       type: oauth2
       description: |
         Endpoints protected by a bearer token passed in the Authorization header. 
         It is assumed gluu-scim is configured to operate in oauth protection mode. Other protection
+=======
+    testmode:
+      type: oauth2
+      description: |
+        Endpoints protected by a bearer token passed in the Authorization header. 
+        It is assumed your jans-scim is configured to operate in test mode. Other protection
+>>>>>>> master
         modes may be available, please check SCIM docs
       flows:
         clientCredentials:
           tokenUrl: 'https://your.gluu.server.com/oxauth/restv1/token'
+<<<<<<< HEAD
           scopes:
             https://gluu.org/scim/users.read: Query user resources
             https://gluu.org/scim/users.write: Modify user resources
@@ -2546,3 +3183,6 @@ components:
             https://gluu.org/scim/fido2.write: Modify fido 2 resources
             https://gluu.org/scim/all-resources.search: Access the root .search endpoint 
             https://gluu.org/scim/bulk: Send requests to the bulk endpoint
+=======
+          scopes: {}
+>>>>>>> master

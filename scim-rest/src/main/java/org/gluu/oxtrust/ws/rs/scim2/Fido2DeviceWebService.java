@@ -223,7 +223,12 @@ public class Fido2DeviceWebService extends BaseScimWebService implements IFido2D
     @DELETE
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
+<<<<<<< HEAD
     @ProtectedApi(oauthScopes = { "https://gluu.org/scim/fido2.write" })
+=======
+    @ProtectedApi
+    @ApiOperation(value = "Delete device")
+>>>>>>> master
     public Response deleteF2Device(@PathParam("id") String id) {
 
         Response response;

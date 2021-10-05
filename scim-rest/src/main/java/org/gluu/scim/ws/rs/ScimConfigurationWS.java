@@ -32,6 +32,12 @@ import com.wordnik.swagger.annotations.ApiResponses;
 /**
  * This class implements the endpoint at which the requester can obtain SCIM metadata configuration. Similar to the SCIM
  * /ServiceProviderConfig endpoint
+<<<<<<< HEAD
+=======
+ *
+ * @author Yuriy Movchan Date: 11/06/2015
+ * Updated by jgomer on 2020-10-20.
+>>>>>>> master
  */
 @ApplicationScoped
 @Path("/scim/scim-configuration")
@@ -95,7 +101,12 @@ public class ScimConfigurationWS {
             log.info("SCIM configuration: {}", entity);
 
             return Response.ok(entity).build();
+<<<<<<< HEAD
         } catch (Exception e) {
+=======
+        }
+        catch (Throwable e) {
+>>>>>>> master
             log.error(e.getMessage(), e);
             throw new WebApplicationException(Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Failed to generate SCIM configuration").build());

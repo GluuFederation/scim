@@ -82,6 +82,12 @@ public class BulkWebService extends BaseScimWebService {
     
     @Inject
     private Fido2DeviceWebService fido2DeviceWS;
+<<<<<<< HEAD
+=======
+
+    @Context
+    private HttpHeaders httpHeaders;
+>>>>>>> master
 
     @javax.ws.rs.POST
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})

@@ -18,8 +18,13 @@ import java.util.regex.Pattern;
 public enum Validations {EMAIL, PHONE, PHOTO, COUNTRY, LOCALE, TIMEZONE;
     //Supporting X.509 validation would add unnecessary overhead...
 
+<<<<<<< HEAD
     //See https://github.com/GluuFederation/scim/issues/14
     private static final Pattern EmailPattern = Pattern.compile("^.+@.+$");
+=======
+    private static final Pattern EmailPattern = Pattern.compile("^(?=.{1,64}@)[\\p{L}0-9_-]+(\\.[\\p{L}0-9_-]+)*@" +
+    	"[^-][\\p{L}0-9-]+(\\.[\\p{L}0-9-]+)*(\\.[\\p{L}]{2,})$");
+>>>>>>> master
 
     private static Set<String> validCountries;
     private static Set<String> validTimeZones;
