@@ -13,11 +13,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.ejb.Stateless;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.inject.Named;
 
+import org.apache.commons.lang.StringUtils;
+
+import org.gluu.config.oxtrust.AppConfiguration;
 import org.gluu.model.GluuAttribute;
 import org.gluu.model.attribute.AttributeDataType;
 import org.gluu.oxtrust.model.scim2.BaseScimResource;
@@ -28,14 +29,14 @@ import org.gluu.oxtrust.model.scim2.util.DateUtil;
 import org.gluu.oxtrust.service.AttributeService;
 import org.slf4j.Logger;
 
-/**
- * Created by jgomer on 2017-09-29.
- */
 @ApplicationScoped
 public class ExtensionService {
 
     @Inject
     private Logger log;
+
+    @Inject
+    AppConfiguration appConfiguration;
 
     @Inject
     private AttributeService attrService;
@@ -63,10 +64,17 @@ public class ExtensionService {
                     }
                 }
 
-                Extension ext = new Extension(USER_EXT_SCHEMA_ID);
+                String uri = appConfiguration.getScimProperties().getUserExtensionSchemaURI();
+                if (StringUtils.isEmpty(uri)) {
+                    uri = USER_EXT_SCHEMA_ID;
+                }
+                Extension ext = new Extension(uri);
                 ext.setFields(fields);
-                ext.setName(USER_EXT_SCHEMA_NAME);
-                ext.setDescription(USER_EXT_SCHEMA_DESCRIPTION);
+
+                if (uri.equals(USER_EXT_SCHEMA_ID)) {
+                    ext.setName(USER_EXT_SCHEMA_NAME);
+                    ext.setDescription(USER_EXT_SCHEMA_DESCRIPTION);
+                }
 
                 list.add(ext);
             }

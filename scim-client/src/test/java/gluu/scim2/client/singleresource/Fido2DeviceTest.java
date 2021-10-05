@@ -16,7 +16,7 @@ import static org.testng.Assert.*;
 
 /**
  * NOTES:
- * Before running this test, first register at least one device via the FIDO 2 API
+ * Ensure the fido2 service is up and running
  */
 public class Fido2DeviceTest extends BaseTest {
 
@@ -97,7 +97,7 @@ public class Fido2DeviceTest extends BaseTest {
 
     }
 
-    @Test(dependsOnMethods = "updateWithObject", alwaysRun = true)
+    //@Test(dependsOnMethods = "updateWithObject", alwaysRun = true)
     public void delete(){
         logger.debug("Deleting Fido 2 device");
         Response response=client.deleteF2Device(device.getId());

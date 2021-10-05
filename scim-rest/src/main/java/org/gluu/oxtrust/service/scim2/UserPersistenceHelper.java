@@ -2,22 +2,25 @@ package org.gluu.oxtrust.service.scim2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.gluu.persist.model.base.CustomObjectAttribute;
 import org.gluu.oxtrust.model.GluuGroup;
 import org.gluu.oxtrust.model.scim.ScimCustomPerson;
 import org.gluu.oxtrust.model.scim2.user.Email;
+import org.gluu.oxtrust.model.scim2.util.DateUtil;
 import org.gluu.oxtrust.service.AttributeService;
 import org.gluu.oxtrust.service.IGroupService;
 import org.gluu.oxtrust.service.IPersonService;
 import org.gluu.oxtrust.util.ServiceUtil;
+import org.gluu.model.GluuAttribute;
+import org.gluu.persist.ldap.impl.LdapEntryManagerFactory;
 import org.gluu.persist.PersistenceEntryManager;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 
-import javax.ejb.Stateless;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -38,17 +41,28 @@ public class UserPersistenceHelper {
 
     @Inject
     private IGroupService groupService;
+    
+    private Map<String, GluuAttribute> attributesMap;
+    
+    public String getUserInumFromDN(String deviceDn){
+        String baseDn = personService.getDnForPerson(null).replaceAll("\\s*", "");
+        deviceDn = deviceDn.replaceAll("\\s*", "").replaceAll("," + baseDn, "");
+        return deviceDn.substring(deviceDn.indexOf("inum=") + 5);
+    }
 
     public void addCustomObjectClass(ScimCustomPerson person) {
-        String[] customObjectClasses = Optional.ofNullable(person.getCustomObjectClasses()).orElse(new String[0]);
-        Set<String> customObjectClassesSet = new HashSet<>(Stream.of(customObjectClasses).collect(Collectors.toList()));
-        customObjectClassesSet.add(attributeService.getCustomOrigin());
-        person.setCustomObjectClasses(customObjectClassesSet.toArray(new String[0]));
+    	if (LdapEntryManagerFactory.PERSISTENCE_TYPE.equals(persistenceEntryManager.getPersistenceType())) {
+            String[] customObjectClasses = Optional.ofNullable(person.getCustomObjectClasses()).orElse(new String[0]);
+            Set<String> customObjectClassesSet = new HashSet<>(Stream.of(customObjectClasses).collect(Collectors.toList()));
+            customObjectClassesSet.add(attributeService.getCustomOrigin());
+            person.setCustomObjectClasses(customObjectClassesSet.toArray(new String[0]));
+        }
     }
 
     public void addPerson(ScimCustomPerson person) throws Exception {
         //It is guaranteed that no duplicate UID occurs when this method is called
         person.setCreationDate(new Date());
+        applyMultiValued(person.getTypedCustomAttributes());
         persistenceEntryManager.persist(person);
     }
 
@@ -69,31 +83,39 @@ public class UserPersistenceHelper {
         Date updateDate = new Date();
         person.setUpdatedAt(updateDate);
         if (person.getAttribute("oxTrustMetaLastModified") != null) {
-            person.setAttribute("oxTrustMetaLastModified",
-                    ISODateTimeFormat.dateTime().withZoneUTC().print(updateDate.getTime()));
+            person.setAttribute("oxTrustMetaLastModified", DateUtil.millisToISOString(updateDate.getTime()));
         }
+        applyMultiValued(person.getTypedCustomAttributes());
         persistenceEntryManager.merge(person);
 
     }
 
     /**
-     * Delete a person from a group
-     *
+     * "Detaches" a person from all groups he is currently member of
+     * @param person The person in question
      * @throws Exception
      */
-    public void deleteUserFromGroup(ScimCustomPerson person, String dn) throws Exception {
+    public void removeUserFromGroups(ScimCustomPerson person) {
 
+        String dn = person.getDn();
         List<String> groups = person.getMemberOf();
+        
         for (String oneGroup : groups) {
-
-            GluuGroup aGroup = groupService.getGroupByDn(oneGroup);
-            List<String> tempGroupMembers = new ArrayList<>(
-                    Optional.ofNullable(aGroup.getMembers()).orElse(Collections.emptyList()));
-
-            if (tempGroupMembers.contains(dn)) {
-                tempGroupMembers.remove(dn);
-                aGroup.setMembers(tempGroupMembers.isEmpty() ? null : tempGroupMembers);
-                groupService.updateGroup(aGroup);
+            try {
+                GluuGroup aGroup = groupService.getGroupByDn(oneGroup);
+                List<String> groupMembers = aGroup.getMembers();
+                int idx = Optional.ofNullable(groupMembers).map(l -> l.indexOf(dn)).orElse(-1);
+                
+                if (idx >= 0) {
+                    List<String> newMembers = new ArrayList<>();
+                    newMembers.addAll(groupMembers.subList(0, idx));
+                    newMembers.addAll(groupMembers.subList(idx + 1, groupMembers.size()));
+                    
+                    aGroup.setMembers(newMembers.isEmpty() ? null : newMembers);
+                    groupService.updateGroup(aGroup);
+                }
+            } catch (Exception e) {
+                log.error(e.getMessage());
             }
         }
 
@@ -128,7 +150,28 @@ public class UserPersistenceHelper {
     }
 
     public void removePerson(ScimCustomPerson person) {
-        persistenceEntryManager.removeRecursively(person.getDn());
+        persistenceEntryManager.removeRecursively(person.getDn(), person.getClass());
     }
 
+    @PostConstruct
+    private void init() {
+    	attributesMap = attributeService.getAllAttributes().stream().collect(
+    		    Collectors.toMap(GluuAttribute::getName, Function.identity(),
+    		    	(name, attr) -> attr)    //Avoid exception due to duplicate keys
+    		);
+    }
+    
+	private void applyMultiValued(List<CustomObjectAttribute> customAttributes) {
+        
+		for (CustomObjectAttribute customAttribute : customAttributes) {
+			
+			Optional.ofNullable(attributesMap.get(customAttribute.getName()))
+			    .map(GluuAttribute::getOxMultiValuedAttribute)
+			    .map(Boolean::booleanValue)
+			    .ifPresent(mv -> customAttribute.setMultiValued(mv));
+			    
+			//when any of the optionals above is empty, it means "we aint' sure" about cardinality
+		}
+	}
+    
 }

@@ -59,6 +59,8 @@ public class UpdatedUsersTest extends UserBaseTest {
             	//logger.info("{}-indexed user created at '{}'", j, isoDate);
 			}
 		}
+        
+        Thread.sleep(1500);	//See https://github.com/JanssenProject/jans-scim/issues/7
 		
 		logger.info("Querying created users after '{}'", isoDate);
 		Response response = client.usersChangedAfter(isoDate, 0, N);

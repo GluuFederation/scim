@@ -1,9 +1,3 @@
-/*
- * oxTrust is available under the MIT License (2008). See http://opensource.org/licenses/MIT for full text.
- *
- * Copyright (c) 2014, Gluu
- */
-
 package org.gluu.oxtrust.ws.rs.scim2;
 
 import static org.gluu.oxtrust.model.scim2.Constants.MEDIA_TYPE_SCIM_JSON;
@@ -20,16 +14,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
+import org.gluu.config.oxtrust.ScimMode;
 import org.gluu.oxtrust.model.scim2.Meta;
 import org.gluu.oxtrust.model.scim2.provider.config.AuthenticationScheme;
 import org.gluu.oxtrust.model.scim2.provider.config.ServiceProviderConfig;
 import org.gluu.oxtrust.model.scim2.util.ScimResourceUtil;
 import org.gluu.oxtrust.service.scim2.interceptor.RejectFilterParam;
 
-/**
- * @author Rahat Ali Date: 05.08.2015
- * Updated by jgomer2001 on 2017-09-23
- */
 @Named("serviceProviderConfig")
 @Path("/scim/v2/ServiceProviderConfig")
 public class ServiceProviderConfigWS extends BaseScimWebService {
@@ -49,9 +40,9 @@ public class ServiceProviderConfigWS extends BaseScimWebService {
             meta.setResourceType(ScimResourceUtil.getType(serviceProviderConfig.getClass()));
             serviceProviderConfig.setMeta(meta);
 
-            boolean onTestMode = appConfiguration.isScimTestMode();
+            boolean uma = appConfiguration.getScimProperties().getProtectionMode().equals(ScimMode.UMA);
             serviceProviderConfig.setAuthenticationSchemes(Arrays.asList(
-                    AuthenticationScheme.createOAuth2(onTestMode), AuthenticationScheme.createUma(!onTestMode)));
+                    AuthenticationScheme.createOAuth2(!uma), AuthenticationScheme.createUma(uma)));
 
             return Response.ok(resourceSerializer.serialize(serviceProviderConfig)).build();
         }
@@ -64,8 +55,8 @@ public class ServiceProviderConfigWS extends BaseScimWebService {
 
     @PostConstruct
     public void setup(){
-        //Do not use getClass() here... a typical weld issue...
-        endpointUrl=appConfiguration.getBaseEndpoint() + ServiceProviderConfigWS.class.getAnnotation(Path.class).value();
+        //Do not use getClass() here...
+        init(ServiceProviderConfigWS.class);
     }
 
 }

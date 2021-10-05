@@ -1,10 +1,10 @@
 package org.gluu.oxtrust.service.external;
 
-import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.annotation.PostConstruct;
+import javax.ws.rs.core.Response;
 
 import org.gluu.model.SimpleCustomProperty;
 import org.gluu.model.custom.script.CustomScriptType;
@@ -13,6 +13,8 @@ import org.gluu.model.custom.script.type.scim.ScimType;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.oxtrust.model.GluuGroup;
 import org.gluu.oxtrust.model.scim.ScimCustomPerson;
+import org.gluu.oxtrust.model.scim2.SearchRequest;
+import org.gluu.persist.model.base.Entry;
 import org.gluu.service.custom.script.ExternalScriptService;
 
 /**
@@ -21,13 +23,24 @@ import org.gluu.service.custom.script.ExternalScriptService;
  */
 @ApplicationScoped
 public class ExternalScimService extends ExternalScriptService {
-	
-	private static final long serialVersionUID = 1767751544454591666L;
+    
+    private static final long serialVersionUID = 1767751544454591666L;
 
     public ExternalScimService() {
         super(CustomScriptType.SCIM);
     }
 
+    private CustomScriptConfiguration findConfigWithGEVersion(int version) {
+        return customScriptConfigurations.stream()
+                .filter(sc -> executeExternalGetApiVersion(sc) >= version)
+                .findFirst().orElse(null);    
+    }
+    
+    private void logAndSave(CustomScriptConfiguration customScriptConfiguration, Exception e) {
+        log.error(e.getMessage(), e);
+        saveScriptError(customScriptConfiguration.getCustomScript(), e);        
+    }
+    
     private boolean executeScimCreateUserMethod(ScimCustomPerson user, CustomScriptConfiguration customScriptConfiguration) {
 
         try {
@@ -40,8 +53,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -62,8 +74,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -81,8 +92,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -103,8 +113,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -122,8 +131,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -144,8 +152,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -166,8 +173,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -185,8 +191,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -207,8 +212,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -226,8 +230,7 @@ public class ExternalScimService extends ExternalScriptService {
             return  result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -248,8 +251,7 @@ public class ExternalScimService extends ExternalScriptService {
             return  result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -267,8 +269,7 @@ public class ExternalScimService extends ExternalScriptService {
             return  result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -289,8 +290,7 @@ public class ExternalScimService extends ExternalScriptService {
             return  result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -311,8 +311,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
 
@@ -321,7 +320,7 @@ public class ExternalScimService extends ExternalScriptService {
     private boolean executeScimPostSearchUsersMethod(PagedResult<ScimCustomPerson> pagedResult, CustomScriptConfiguration customScriptConfiguration) {
 
         try {
-        	if (executeExternalGetApiVersion(customScriptConfiguration) < 4)
+            if (executeExternalGetApiVersion(customScriptConfiguration) < 4)
                 return true;
             
             log.debug("Executing python 'SCIM Search Users' method");
@@ -333,8 +332,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
         
@@ -343,7 +341,7 @@ public class ExternalScimService extends ExternalScriptService {
     private boolean executeScimPostSearchGroupsMethod(PagedResult<GluuGroup> pagedResult, CustomScriptConfiguration customScriptConfiguration) {
 
         try {
-        	if (executeExternalGetApiVersion(customScriptConfiguration) < 4)
+            if (executeExternalGetApiVersion(customScriptConfiguration) < 4)
                 return true;
             
             log.debug("Executing python 'SCIM Search Groups' method");
@@ -355,8 +353,7 @@ public class ExternalScimService extends ExternalScriptService {
             return result;
             
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            saveScriptError(customScriptConfiguration.getCustomScript(), e);
+            logAndSave(customScriptConfiguration, e);
         }
         return false;
         
@@ -534,6 +531,52 @@ public class ExternalScimService extends ExternalScriptService {
             }
         }
         return true;
+    }
+
+    public Response executeManageResourceOperation(Entry entity, Object payload, OperationContext context) throws Exception {
+        
+        CustomScriptConfiguration configuration = findConfigWithGEVersion(5);
+        Response result = null;
+        
+        try {
+            if (configuration != null) {
+                log.debug("Executing python 'SCIM Manage Resource Operation' method");
+                ScimType externalType = (ScimType) configuration.getExternalType();
+                Map<String, SimpleCustomProperty> configurationAttributes = configuration.getConfigurationAttributes();
+
+                result = externalType.manageResourceOperation(context, entity, payload, configurationAttributes);
+                log.debug("executeManageResourceOperation result HTTP code = {}", 
+                    Optional.ofNullable(result).map(res -> Integer.toString(res.getStatus())).orElse("none"));
+            }
+        } catch (Exception e) {
+            logAndSave(configuration, e);
+            throw e;
+        }        
+        return result;
+
+    }
+
+    public Response executeManageSearchOperation(SearchRequest searchRequest, OperationContext context) throws Exception {
+        
+        CustomScriptConfiguration configuration = findConfigWithGEVersion(5);
+        Response result = null;
+
+        try {
+            if (configuration != null) {
+                log.debug("Executing python 'SCIM Manage Search Operation' method");
+                ScimType externalType = (ScimType) configuration.getExternalType();
+                Map<String, SimpleCustomProperty> configurationAttributes = configuration.getConfigurationAttributes();
+
+                result = externalType.manageSearchOperation(context, searchRequest, configurationAttributes);
+                log.debug("executeManageSearchOperation result HTTP code = {}", 
+                    Optional.ofNullable(result).map(res -> Integer.toString(res.getStatus())).orElse("none"));
+            }
+        } catch (Exception e) {
+            logAndSave(configuration, e);
+            throw e;
+        }        
+        return result;
+        
     }
     
 }

@@ -1,8 +1,3 @@
-/*
- * oxTrust is available under the MIT License (2008). See http://opensource.org/licenses/MIT for full text.
- *
- * Copyright (c) 2017, Gluu
- */
 package org.gluu.oxtrust.ws.rs.scim2;
 
 import static javax.ws.rs.core.Response.Status.OK;
@@ -42,13 +37,8 @@ import org.gluu.oxtrust.service.scim2.interceptor.RefAdjusted;
 import org.gluu.oxtrust.service.scim2.serialization.ListResponseJsonSerializer;
 import org.gluu.util.Pair;
 
-import com.wordnik.swagger.annotations.ApiOperation;
-import com.wordnik.swagger.annotations.ApiParam;
-
 /**
  * Implementation of the /.search endpoint for the root URL of the service
- *
- * Created by jgomer on 2017-10-25.
  */
 @Named
 @Path("/scim/v2/.search")
@@ -76,10 +66,9 @@ public class SearchResourcesWebService extends BaseScimWebService {
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/all-resources.search" })
     @RefAdjusted
-    @ApiOperation(value = "General search POST /.search", notes = "Returns a list of resources (https://tools.ietf.org/html/rfc7644#section-3.4.3)", response = ListResponse.class)
-    public Response search(@ApiParam(value = "SearchRequest", required = true) SearchRequest searchRequest) {
+    public Response search(SearchRequest searchRequest) {
 
         SearchRequest searchReq = new SearchRequest();
         Response response = prepareSearchRequest(searchRequest.getSchemas(), searchRequest.getFilter(), searchRequest.getSortBy(),
@@ -252,8 +241,8 @@ public class SearchResourcesWebService extends BaseScimWebService {
 
     @PostConstruct
     public void setup(){
-        //Do not use getClass() here... a typical weld issue...
-        endpointUrl=appConfiguration.getBaseEndpoint() + SearchResourcesWebService.class.getAnnotation(Path.class).value();
+        //Do not use getClass() here...
+        init(SearchResourcesWebService.class);
         mapper=new ObjectMapper();
 
         //Do not alter the order of appearance (see getListResponseTree)

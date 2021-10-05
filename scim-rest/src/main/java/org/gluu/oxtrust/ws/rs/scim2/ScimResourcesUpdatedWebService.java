@@ -68,7 +68,7 @@ public class ScimResourcesUpdatedWebService extends BaseScimWebService {
     @Path("UpdatedUsers")
     @GET
     @Produces(MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/users.read" })
     public Response usersChangedAfter(@QueryParam("timeStamp") String isoDate,
                                       @QueryParam("start") int start,
                                       @QueryParam("pageSize") int itemsPerPage) {

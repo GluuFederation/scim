@@ -1,9 +1,3 @@
-/*
- * oxTrust is available under the MIT License (2008). See http://opensource.org/licenses/MIT for full text.
- *
- * Copyright (c) 2014, Gluu
- */
-
 package org.gluu.oxtrust.ws.rs.scim2;
 
 import static org.gluu.oxtrust.model.scim2.Constants.MEDIA_TYPE_SCIM_JSON;
@@ -45,17 +39,12 @@ import org.gluu.oxtrust.model.scim2.util.ScimResourceUtil;
 import org.gluu.oxtrust.service.scim2.interceptor.RejectFilterParam;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.wordnik.swagger.annotations.Api;
 
 /**
  * Web service for the /Schemas endpoint.
- *
- * @author Val Pecaoco
- * Re-engineered by jgomer on 2017-09-27.
  */
 @Named("scim2SchemaEndpoint")
 @Path("/scim/v2/Schemas")
-@Api(value = "/v2/Schemas", description = "SCIM 2.0 Schema Endpoint (https://tools.ietf.org/html/rfc7643#section-4)")
 public class SchemaWebService extends BaseScimWebService {
 
     private Map<String, Class<? extends BaseScimResource>> resourceSchemas;
@@ -114,8 +103,8 @@ public class SchemaWebService extends BaseScimWebService {
 
     @PostConstruct
     public void setup() {
-        //Do not use getClass() here... a typical weld issue...
-        endpointUrl = appConfiguration.getBaseEndpoint() + SchemaWebService.class.getAnnotation(Path.class).value();
+        //Do not use getClass() here...
+        init(SchemaWebService.class);
 
         List<Class<? extends BaseScimResource>> excludedResources=Arrays.asList(SchemaResource.class, ResourceType.class, ServiceProviderConfig.class);
         resourceSchemas=new HashMap<>();

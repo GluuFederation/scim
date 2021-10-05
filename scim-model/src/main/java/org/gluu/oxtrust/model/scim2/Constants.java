@@ -16,17 +16,17 @@ public interface Constants {
     String MEDIA_TYPE_SCIM_JSON = "application/scim+json";
 
     /**
-     * URN used to identify the schema used to extend the User resouce type
+     * URN used to identify the schema used to extend the User resource type
      */
     String USER_EXT_SCHEMA_ID = "urn:ietf:params:scim:schemas:extension:gluu:2.0:User";
 
     /**
-     * Human-readable name of the schema used to extend the User resouce type
+     * Human-readable name of the schema used to extend the User resource type
      */
     String USER_EXT_SCHEMA_NAME = "GluuUserCustomExtension";
 
     /**
-     * Description of the schema used to extend the User resouce type
+     * Description of the schema used to extend the User resource type
      */
     String USER_EXT_SCHEMA_DESCRIPTION = "Gluu User Custom Extension";
 
@@ -98,6 +98,8 @@ public interface Constants {
      * The HTTP query parameter used to specify the maximum number of results per result page.
      */
     String QUERY_PARAM_COUNT = "count";
+
+    String GROUP_OVERHEAD_BYPASS_PARAM = "Group-Overhead-Bypass";
 
     int MAX_COUNT = 200;    //Do not remove till Gluu 4 release. This is used in SCIM-client project
 

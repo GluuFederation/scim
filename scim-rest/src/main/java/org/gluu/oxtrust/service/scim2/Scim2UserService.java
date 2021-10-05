@@ -21,6 +21,7 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.commons.lang.StringUtils;
 import org.gluu.config.oxtrust.AppConfiguration;
 import org.gluu.model.GluuStatus;
+import org.gluu.oxtrust.model.GluuBoolean;
 import org.gluu.oxtrust.model.GluuGroup;
 import org.gluu.oxtrust.model.scim.ScimCustomPerson;
 import org.gluu.oxtrust.model.scim2.BaseScimResource;
@@ -38,6 +39,7 @@ import org.gluu.oxtrust.model.scim2.user.Photo;
 import org.gluu.oxtrust.model.scim2.user.Role;
 import org.gluu.oxtrust.model.scim2.user.UserResource;
 import org.gluu.oxtrust.model.scim2.user.X509Certificate;
+import org.gluu.oxtrust.model.scim2.util.DateUtil;
 import org.gluu.oxtrust.model.scim2.util.IntrospectUtil;
 import org.gluu.oxtrust.model.scim2.util.ScimResourceUtil;
 import org.gluu.oxtrust.service.IGroupService;
@@ -49,9 +51,7 @@ import org.gluu.oxtrust.ws.rs.scim2.GroupWebService;
 import org.gluu.persist.PersistenceEntryManager;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
-import org.gluu.persist.model.base.GluuBoolean;
 import org.gluu.search.filter.Filter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -277,13 +277,13 @@ public class Scim2UserService implements Serializable {
 		meta.setCreated(person.getAttribute("oxTrustMetaCreated"));
 		if (meta.getCreated() == null) {
 			Date date = person.getCreationDate();
-			meta.setCreated(date == null ? null : ISODateTimeFormat.dateTime().withZoneUTC().print(date.getTime()));
+			meta.setCreated(date == null ? null : DateUtil.millisToISOString(date.getTime()));
 		}
 
 		meta.setLastModified(person.getAttribute("oxTrustMetaLastModified"));
 		if (meta.getLastModified() == null) {
 			Date date = person.getUpdatedAt();
-			meta.setLastModified(date == null ? null : ISODateTimeFormat.dateTime().withZoneUTC().print(date.getTime()));
+			meta.setLastModified(date == null ? null : DateUtil.millisToISOString(date.getTime()));
 		}
 
 		meta.setLocation(person.getAttribute("oxTrustMetaLocation"));
@@ -447,6 +447,20 @@ public class Scim2UserService implements Serializable {
 		writeCommonName(person);
 
 	}
+        
+        public ScimCustomPerson preCreateUser(UserResource user) {
+
+            log.info("Preparing to create user {}", user.getUserName());
+
+            // There is no need to check attributes mutability in this case as there are no
+            // original attributes (the resource does not exist yet)
+            ScimCustomPerson gluuPerson = new ScimCustomPerson();
+            transferAttributesToPerson(user, gluuPerson);
+            assignComputedAttributesToPerson(gluuPerson);
+            
+            return gluuPerson;
+            
+        }
 
 	/**
 	 * Inserts a new user in LDAP based on the SCIM Resource passed
@@ -456,22 +470,12 @@ public class Scim2UserService implements Serializable {
 	 * @param url Base URL associated to user resources in SCIM (eg. .../scim/v2/Users)
 	 * @throws Exception In case of unexpected error
 	 */
-	public void createUser(UserResource user, String url) throws Exception {
+	public void createUser(ScimCustomPerson gluuPerson, UserResource user, String url) throws Exception {
 
-		String userName = user.getUserName();
-		log.info("Preparing to create user {}", userName);
+                String location = url + "/" + gluuPerson.getInum();
+                gluuPerson.setAttribute("oxTrustMetaLocation", location);
 
-		// There is no need to check attributes mutability in this case as there are no
-		// original attributes
-		// (the resource does not exist yet)
-		ScimCustomPerson gluuPerson = new ScimCustomPerson();
-		transferAttributesToPerson(user, gluuPerson);
-		assignComputedAttributesToPerson(gluuPerson);
-
-		String location = url + "/" + gluuPerson.getInum();
-		gluuPerson.setAttribute("oxTrustMetaLocation", location);
-
-		log.info("Persisting user {}", userName);
+		log.info("Persisting user {}", user.getUserName());
 		userPersistenceHelper.addCustomObjectClass(gluuPerson);
 
 		if (externalScimService.isEnabled()) {
@@ -494,15 +498,25 @@ public class Scim2UserService implements Serializable {
 
 	}
 
-	public UserResource updateUser(String id, UserResource user, String url) throws InvalidAttributeValueException {
+        public UserResource buildUserResource(ScimCustomPerson person, String url) {
 
-		ScimCustomPerson gluuPerson = userPersistenceHelper.getPersonByInum(id); // This is never null (see decorator involved)
+            if (externalScimService.isEnabled() && !externalScimService.executeScimGetUserMethods(person)) {
+                throw new WebApplicationException("Failed to execute SCIM script successfully",
+                        Status.PRECONDITION_FAILED);
+            }
+            
+            UserResource user = new UserResource();
+            transferAttributesToUserResource(person, user, url);
+            
+            return user;
+            
+        }
+        
+	public UserResource updateUser(ScimCustomPerson gluuPerson, UserResource user, String url) throws InvalidAttributeValueException {
+
 		UserResource tmpUser = new UserResource();
-
 		transferAttributesToUserResource(gluuPerson, tmpUser, url);
-
-		long now = System.currentTimeMillis();
-		tmpUser.getMeta().setLastModified(ISODateTimeFormat.dateTime().withZoneUTC().print(now));
+		tmpUser.getMeta().setLastModified(DateUtil.millisToISOString(System.currentTimeMillis()));
 
 		tmpUser = (UserResource) ScimResourceUtil.transferToResourceReplace(user, tmpUser,
 				extService.getResourceExtensions(user.getClass()));
@@ -538,12 +552,11 @@ public class Scim2UserService implements Serializable {
 
 	public void deleteUser(ScimCustomPerson gluuPerson) throws Exception {
 
-		String dn = gluuPerson.getDn();
 		if (gluuPerson.getMemberOf() != null && gluuPerson.getMemberOf().size() > 0) {
 			log.info("Removing user {} from groups", gluuPerson.getUid());
-			userPersistenceHelper.deleteUserFromGroup(gluuPerson, dn);
+			userPersistenceHelper.removeUserFromGroups(gluuPerson);
 		}
-		log.info("Removing user entry {}", dn);
+		log.info("Removing user entry {}", gluuPerson.getDn());
 
 		if (externalScimService.isEnabled()) {
 			boolean result = externalScimService.executeScimDeleteUserMethods(gluuPerson);

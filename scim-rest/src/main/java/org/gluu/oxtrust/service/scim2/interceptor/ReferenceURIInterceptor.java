@@ -1,8 +1,3 @@
-/*
- * oxTrust is available under the MIT License (2008). See http://opensource.org/licenses/MIT for full text.
- *
- * Copyright (c) 2017, Gluu
- */
 package org.gluu.oxtrust.service.scim2.interceptor;
 
 import static org.gluu.oxtrust.model.scim2.Constants.QUERY_PARAM_ATTRIBUTES;
@@ -28,11 +23,10 @@ import org.slf4j.Logger;
 /*
  * This could have been implemented with a decorator, but pollutes the code a lot, so this way is more concise. Using a
  * resteasy filter is not convenient since it does not get invoked if the call is internal (not an HTTP one)
- * Created by jgomer on 2017-10-10.
  */
 @RefAdjusted
 @Interceptor
-@Priority(Interceptor.Priority.APPLICATION+1)
+@Priority(Interceptor.Priority.APPLICATION)
 public class ReferenceURIInterceptor {
 
     @Inject

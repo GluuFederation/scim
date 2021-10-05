@@ -7,35 +7,34 @@ import org.gluu.oxtrust.model.scim2.fido.FidoDeviceResource;
 import org.gluu.oxtrust.model.scim2.util.IntrospectUtil;
 import org.testng.annotations.Test;
 
+import java.util.Optional;
 import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.Response.Status.*;
 
 import static org.testng.Assert.*;
 
-/**
- * NOTES:
- * Before running this test, first register at least one device via the FIDO U2F API.
- *
- * Created by jgomer on 2017-10-21.
- * Based on former Val Pecaoco's gluu.scim2.client.fido.FidoDevicesObjectTests
- */
 public class FidoU2fDeviceTest extends BaseTest {
 
     private FidoDeviceResource device;
     private static final Class<FidoDeviceResource> fidoClass=FidoDeviceResource.class;
 
     @Test
-    public void search(){
+    public void search() {
 
         logger.debug("Searching all fido u2f devices");
         Response response=client.searchDevices(null, "application pr", null, null, null, null, null, null);
         assertEquals(response.getStatus(), OK.getStatusCode());
 
         ListResponse listResponse=response.readEntity(ListResponse.class);
-        //Work upon the first device of the list only
-        device=(FidoDeviceResource) listResponse.getResources().get(0);
-        assertNotNull(device);
+        
+        //Work upon the first device whose deviceData is empty
+        Optional<FidoDeviceResource> opt = listResponse.getResources().stream()
+                                               .map(FidoDeviceResource.class::cast)
+                                               .filter(dev -> dev.getDeviceData() == null).findAny();	
+        
+        assertTrue(opt.isPresent());        
+        device = opt.get();
         logger.debug("First device {} picked", device.getId());
 
     }
@@ -91,7 +90,7 @@ public class FidoU2fDeviceTest extends BaseTest {
                 assertEquals(BeanUtils.getProperty(updated, path), val);
         }
 
-        //Update an immutable attribute (originally null)
+        //Update an immutable attribute (originally null). Per spec, uninitialized immutable attributes can be set
         assertNull(updated.getDeviceData());
         updated.setDeviceData("Dummy device data");
         response=client.updateDevice(updated, updated.getId(), null, null);
@@ -105,7 +104,7 @@ public class FidoU2fDeviceTest extends BaseTest {
 
     }
 
-    @Test(dependsOnMethods = "updateWithObject", alwaysRun = true)
+    //@Test(dependsOnMethods = "updateWithObject", alwaysRun = true)
     public void delete(){
         logger.debug("Deleting device");
         Response response=client.deleteDevice(device.getId());

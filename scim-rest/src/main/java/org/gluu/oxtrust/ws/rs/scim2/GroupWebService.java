@@ -1,10 +1,6 @@
-/*
- * oxTrust is available under the MIT License (2008). See http://opensource.org/licenses/MIT for full text.
- *
- * Copyright (c) 2014, Gluu
- */
 package org.gluu.oxtrust.ws.rs.scim2;
 
+import static org.gluu.oxtrust.model.scim2.Constants.GROUP_OVERHEAD_BYPASS_PARAM;
 import static org.gluu.oxtrust.model.scim2.Constants.MEDIA_TYPE_SCIM_JSON;
 import static org.gluu.oxtrust.model.scim2.Constants.QUERY_PARAM_ATTRIBUTES;
 import static org.gluu.oxtrust.model.scim2.Constants.QUERY_PARAM_COUNT;
@@ -16,6 +12,9 @@ import static org.gluu.oxtrust.model.scim2.Constants.QUERY_PARAM_START_INDEX;
 import static org.gluu.oxtrust.model.scim2.Constants.UTF8_CHARSET_FRAGMENT;
 
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.function.Predicate;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -26,51 +25,42 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.HttpMethod;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang.StringUtils;
 import org.gluu.oxtrust.model.GluuGroup;
 import org.gluu.oxtrust.model.exception.SCIMException;
 import org.gluu.oxtrust.model.scim2.BaseScimResource;
 import org.gluu.oxtrust.model.scim2.ErrorScimType;
-import org.gluu.oxtrust.model.scim2.ListResponse;
 import org.gluu.oxtrust.model.scim2.SearchRequest;
 import org.gluu.oxtrust.model.scim2.group.GroupResource;
 import org.gluu.oxtrust.model.scim2.patch.PatchOperation;
 import org.gluu.oxtrust.model.scim2.patch.PatchRequest;
+import org.gluu.oxtrust.model.scim2.util.DateUtil;
+import org.gluu.oxtrust.model.scim2.util.ScimResourceUtil;
 import org.gluu.oxtrust.service.IGroupService;
 import org.gluu.oxtrust.service.filter.ProtectedApi;
 import org.gluu.oxtrust.service.scim2.Scim2GroupService;
 import org.gluu.oxtrust.service.scim2.Scim2PatchService;
 import org.gluu.oxtrust.service.scim2.interceptor.RefAdjusted;
+import org.gluu.persist.exception.operation.DuplicateEntryException;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
-import org.joda.time.format.ISODateTimeFormat;
-
-import com.wordnik.swagger.annotations.Api;
-import com.wordnik.swagger.annotations.ApiOperation;
-import com.wordnik.swagger.annotations.ApiParam;
-import com.wordnik.swagger.annotations.Authorization;
 
 /**
- * Implementation of /Groups endpoint. Methods here are intercepted and/or decorated.
- * Class org.gluu.oxtrust.service.scim2.interceptor.GroupWebServiceDecorator is used to apply pre-validations on data.
+ * Implementation of /Groups endpoint. Methods here are intercepted.
  * Filter org.gluu.oxtrust.filter.AuthorizationProcessingFilter secures invocations
- *
- * @author Rahat Ali Date: 05.08.2015
- * Updated by jgomer on 2017-10-18
  */
 @Named("scim2GroupEndpoint")
 @Path("/scim/v2/Groups")
-@Api(value = "/v2/Groups", description = "SCIM 2.0 Group Endpoint (https://tools.ietf.org/html/rfc7644#section-3.2)",
-        authorizations = {@Authorization(value = "Authorization", type = "uma")})
 public class GroupWebService extends BaseScimWebService implements IGroupWebService {
 
     @Inject
@@ -84,29 +74,120 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
 
     @Inject
     private Scim2PatchService scim2PatchService;
+    
+    private String usersUrl;
+    
+    private String groupResourceType;
 
+    private Predicate<String> selectionFilterSkipPredicate;
+
+    private void checkDisplayNameExistence(String displayName) throws DuplicateEntryException {
+
+        boolean flag = false;
+        try {
+            flag = groupService.getGroupByDisplayName(displayName) != null;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        if (flag)
+            throw new DuplicateEntryException("Duplicate group displayName value: " + displayName);
+
+    }
+
+    private void checkDisplayNameExistence(String displayName, String id) throws DuplicateEntryException {
+        // Validate if there is an attempt to supply a displayName already in use by a
+        // group other than current
+
+        GluuGroup groupToFind = new GluuGroup();
+        groupToFind.setDisplayName(displayName);
+
+        List<GluuGroup> list = groupService.findGroups(groupToFind, 2);
+        if (list != null &&
+            list.stream().anyMatch(g -> !g.getInum().equals(id))) {
+            throw new DuplicateEntryException("Duplicate group displayName value: " + displayName);
+        }
+
+    }
+
+    private Response doSearchGroups(String filter, Integer startIndex, Integer count,
+            String sortBy, String sortOrder, String attrsList, String excludedAttrsList,
+            String method, boolean fillMembersDisplay) {
+        
+        Response response;
+        try {
+            SearchRequest searchReq = new SearchRequest();
+            response = prepareSearchRequest(searchReq.getSchemas(), filter, sortBy,
+                    sortOrder, startIndex, count, attrsList, excludedAttrsList, searchReq);
+            if (response != null) return response;
+
+            response = externalConstraintsService.applySearchCheck(searchReq,
+                    httpHeaders, uriInfo, method, groupResourceType);
+            if (response != null) return response;
+
+            PagedResult<BaseScimResource> resources = scim2GroupService.searchGroups(
+                    searchReq.getFilter(), translateSortByAttribute(GroupResource.class, searchReq.getSortBy()), 
+                    SortOrder.getByValue(searchReq.getSortOrder()), searchReq.getStartIndex(),
+                    searchReq.getCount(), endpointUrl, usersUrl, getMaxCount(), fillMembersDisplay);
+
+            String json = getListResponseSerialized(resources.getTotalEntriesCount(), 
+                    searchReq.getStartIndex(), resources.getEntries(), searchReq.getAttributesStr(), 
+                    searchReq.getExcludedAttributesStr(), searchReq.getCount() == 0);
+            response = Response.ok(json).location(new URI(endpointUrl)).build();
+        } catch (SCIMException e){
+            log.error(e.getMessage(), e);
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_FILTER,
+                    e.getMessage());
+        } catch (Exception e){
+            log.error("Failure at searchGroups method", e);
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR,
+                    "Unexpected error: " + e.getMessage());
+        }
+        return response;
+   
+    }
+    
     @POST
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/groups.write" })
     @RefAdjusted
-    @ApiOperation(value = "Create group", notes = "Create group (https://tools.ietf.org/html/rfc7644#section-3.3)", response = GroupResource.class)
     public Response createGroup(
-            @ApiParam(value = "Group", required = true) GroupResource group,
+            GroupResource group,
             @QueryParam(QUERY_PARAM_ATTRIBUTES) String attrsList,
             @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList) {
 
         Response response;
         try {
             log.debug("Executing web service method. createGroup");
-            scim2GroupService.createGroup(group, endpointUrl, userWebService.getEndpointUrl());
-            String json=resourceSerializer.serialize(group, attrsList, excludedAttrsList);
-            response=Response.created(new URI(group.getMeta().getLocation())).entity(json).build();
-        }
-        catch (Exception e){
+            
+            // empty externalId, no place to store it in LDAP
+            group.setExternalId(null);
+            executeValidation(group);
+            checkDisplayNameExistence(group.getDisplayName());
+            assignMetaInformation(group);
+
+            boolean skipValidation = isMembersValidationSkipped();
+            boolean displayExcluded = isDisplayExcluded(skipValidation, attrsList, excludedAttrsList);
+            GluuGroup gluuGroup = scim2GroupService.preCreateGroup(group, skipValidation,
+                    !displayExcluded, usersUrl);
+
+            response = externalConstraintsService.applyEntityCheck(gluuGroup, group,
+                    httpHeaders, uriInfo, HttpMethod.POST, groupResourceType);
+            if (response != null) return response;
+
+            scim2GroupService.createGroup(gluuGroup, group, !displayExcluded, endpointUrl, usersUrl);           
+            String json = resourceSerializer.serialize(group, attrsList, excludedAttrsList);
+            response = Response.created(new URI(group.getMeta().getLocation())).entity(json).build();
+        } catch (DuplicateEntryException e) {
+            log.error(e.getMessage());
+            response = getErrorResponse(Response.Status.CONFLICT, ErrorScimType.UNIQUENESS, e.getMessage());
+        } catch (SCIMException e) {
+            log.error("Validation check at createGroup returned: {}", e.getMessage());
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_VALUE, e.getMessage());
+        } catch (Exception e){
             log.error("Failure at createGroup method", e);
-            response=getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
         }
         return response;
 
@@ -116,10 +197,8 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     @GET
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/groups.read" })
     @RefAdjusted
-    @ApiOperation(value = "Find group by id", notes = "Returns a group by id as path param (https://tools.ietf.org/html/rfc7644#section-3.4.2.1)",
-            response = GroupResource.class)
     public Response getGroupById(
             @PathParam("id") String id,
             @QueryParam(QUERY_PARAM_ATTRIBUTES) String attrsList,
@@ -128,14 +207,17 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
         Response response;
         try {
             log.debug("Executing web service method. getGroupById");
-            GroupResource group = new GroupResource();
-            GluuGroup gluuGroup = groupService.getGroupByInum(id);  //gluuGroup is not null (check associated decorator method)
 
-            if (externalScimService.isEnabled() && !externalScimService.executeScimGetGroupMethods(gluuGroup)) {
-                throw new WebApplicationException("Failed to execute SCIM script successfully",
-                        Response.Status.PRECONDITION_FAILED);
-            }
-            scim2GroupService.transferAttributesToGroupResource(gluuGroup, group, endpointUrl, userWebService.getEndpointUrl());
+            GluuGroup gluuGroup = groupService.getGroupByInum(id);
+            if (gluuGroup == null) return notFoundResponse(id, groupResourceType);
+            
+            response = externalConstraintsService.applyEntityCheck(gluuGroup, null,
+                    httpHeaders, uriInfo, HttpMethod.GET, groupResourceType);
+            if (response != null) return response;
+
+            boolean displayExcluded = isDisplayExcluded(false, attrsList, excludedAttrsList);
+            GroupResource group = scim2GroupService.buildGroupResource(gluuGroup,
+                    !displayExcluded, endpointUrl, usersUrl);
 
             String json = resourceSerializer.serialize(group, attrsList, excludedAttrsList);
             response = Response.ok(new URI(group.getMeta().getLocation())).entity(json).build();
@@ -158,11 +240,10 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/groups.write" })
     @RefAdjusted
-    @ApiOperation(value = "Update group", notes = "Update group (https://tools.ietf.org/html/rfc7644#section-3.5.1)", response = GroupResource.class)
     public Response updateGroup(
-            @ApiParam(value = "Group", required = true) GroupResource group,
+            GroupResource group,
             @PathParam("id") String id,
             @QueryParam(QUERY_PARAM_ATTRIBUTES) String attrsList,
             @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList) {
@@ -170,17 +251,45 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
         Response response;
         try {
             log.debug("Executing web service method. updateGroup");
-            GroupResource updatedResource=scim2GroupService.updateGroup(id, group, endpointUrl, userWebService.getEndpointUrl());
-            String json=resourceSerializer.serialize(updatedResource, attrsList, excludedAttrsList);
-            response=Response.ok(new URI(updatedResource.getMeta().getLocation())).entity(json).build();
-        }
-        catch (InvalidAttributeValueException e){
+            
+            // empty externalId, no place to store it in LDAP
+            group.setExternalId(null);
+
+            // Check if the ids match in case the group coming has one
+            if (group.getId() != null && !group.getId().equals(id))
+                throw new SCIMException("Parameter id does not match with id attribute of Group");
+
+            GluuGroup gluuGroup = groupService.getGroupByInum(id);
+            if (gluuGroup == null) return notFoundResponse(id, groupResourceType);
+
+            response = externalConstraintsService.applyEntityCheck(gluuGroup, group,
+                    httpHeaders, uriInfo, HttpMethod.PUT, groupResourceType);
+            if (response != null) return response;
+            
+            executeValidation(group, true);
+            if (StringUtils.isNotEmpty(group.getDisplayName())) {
+                checkDisplayNameExistence(group.getDisplayName(), id);
+            }
+
+            boolean skipValidation = isMembersValidationSkipped();
+            boolean displayExcluded = isDisplayExcluded(skipValidation, attrsList, excludedAttrsList);
+            GroupResource updatedResource = scim2GroupService.updateGroup(gluuGroup,
+                    group, skipValidation, !displayExcluded, endpointUrl, usersUrl);
+
+            String json = resourceSerializer.serialize(updatedResource, attrsList, excludedAttrsList);
+            response = Response.ok(new URI(updatedResource.getMeta().getLocation())).entity(json).build();
+        } catch (DuplicateEntryException e) {
             log.error(e.getMessage());
-            response=getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.MUTABILITY, e.getMessage());
-        }
-        catch (Exception e){
+            response = getErrorResponse(Response.Status.CONFLICT, ErrorScimType.UNIQUENESS, e.getMessage());
+        } catch (SCIMException e) {
+            log.error("Validation check at updateGroup returned: {}", e.getMessage());
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_VALUE, e.getMessage());
+        } catch (InvalidAttributeValueException e) {
+            log.error(e.getMessage());
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.MUTABILITY, e.getMessage());
+        } catch (Exception e) {
             log.error("Failure at updateGroup method", e);
-            response=getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
         }
         return response;
 
@@ -190,20 +299,25 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     @DELETE
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
-    @ApiOperation(value = "Delete group", notes = "Delete group (https://tools.ietf.org/html/rfc7644#section-3.6)")
-    public Response deleteGroup(@PathParam("id") String id){
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/groups.write" })
+    public Response deleteGroup(@PathParam("id") String id) {
 
         Response response;
         try {
             log.debug("Executing web service method. deleteGroup");
-            GluuGroup gr=groupService.getGroupByInum(id);  //group cannot be null (check associated decorator method)
-            scim2GroupService.deleteGroup(gr);
-            response=Response.noContent().build();
-        }
-        catch (Exception e){
+
+            GluuGroup gluuGroup = groupService.getGroupByInum(id);
+            if (gluuGroup == null) return notFoundResponse(id, groupResourceType);
+
+            response = externalConstraintsService.applyEntityCheck(gluuGroup, null,
+                    httpHeaders, uriInfo, HttpMethod.DELETE, groupResourceType);
+            if (response != null) return response;
+            
+            scim2GroupService.deleteGroup(gluuGroup);
+            response = Response.noContent().build();
+        } catch (Exception e){
             log.error("Failure at deleteGroup method", e);
-            response=getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
         }
         return response;
 
@@ -212,9 +326,8 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     @GET
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/groups.read" })
     @RefAdjusted
-    @ApiOperation(value = "Search groups", notes = "Returns a list of groups (https://tools.ietf.org/html/rfc7644#section-3.4.2.2)", response = ListResponse.class)
     public Response searchGroups(
             @QueryParam(QUERY_PARAM_FILTER) String filter,
             @QueryParam(QUERY_PARAM_START_INDEX) Integer startIndex,
@@ -224,25 +337,10 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
             @QueryParam(QUERY_PARAM_ATTRIBUTES) String attrsList,
             @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList) {
 
-        Response response;
-        try {
-            log.debug("Executing web service method. searchGroups");
-            sortBy=translateSortByAttribute(GroupResource.class, sortBy);
-            PagedResult<BaseScimResource> resources = scim2GroupService.searchGroups(filter, sortBy, SortOrder.getByValue(sortOrder),
-                    startIndex, count, endpointUrl, userWebService.getEndpointUrl(), getMaxCount());
-
-            String json = getListResponseSerialized(resources.getTotalEntriesCount(), startIndex, resources.getEntries(), attrsList, excludedAttrsList, count==0);
-            response=Response.ok(json).location(new URI(endpointUrl)).build();
-        }
-        catch (SCIMException e){
-            log.error(e.getMessage(), e);
-            response=getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_FILTER, e.getMessage());
-        }
-        catch (Exception e){
-            log.error("Failure at searchGroups method", e);
-            response=getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
-        }
-        return response;
+        log.debug("Executing web service method. searchGroups");
+        boolean displayExcluded = isDisplayExcluded(false, attrsList, excludedAttrsList);
+        return doSearchGroups(filter, startIndex, count, sortBy, sortOrder, attrsList, 
+                excludedAttrsList, HttpMethod.GET, !displayExcluded);
 
     }
 
@@ -251,22 +349,23 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/groups.read" })
     @RefAdjusted
-    @ApiOperation(value = "Search group POST /.search", notes = "Returns a list of groups (https://tools.ietf.org/html/rfc7644#section-3.4.3)", response = ListResponse.class)
-    public Response searchGroupsPost(@ApiParam(value = "SearchRequest", required = true) SearchRequest searchRequest){
+    public Response searchGroupsPost(SearchRequest searchRequest) {
 
         log.debug("Executing web service method. searchGroupsPost");
+        boolean displayExcluded = isDisplayExcluded(false, searchRequest.getAttributesStr(),
+                searchRequest.getExcludedAttributesStr());
 
-        //Calling searchGroups here does not provoke that method's interceptor/decorator being called (only this one's)
-        URI uri=null;
-        Response response = searchGroups(searchRequest.getFilter(), searchRequest.getStartIndex(), searchRequest.getCount(),
-                searchRequest.getSortBy(), searchRequest.getSortOrder(), searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr());
+        Response response = doSearchGroups(searchRequest.getFilter(), searchRequest.getStartIndex(), 
+                searchRequest.getCount(), searchRequest.getSortBy(), searchRequest.getSortOrder(), 
+                searchRequest.getAttributesStr(), searchRequest.getExcludedAttributesStr(),
+                HttpMethod.POST, !displayExcluded);
 
+        URI uri = null;
         try {
             uri = new URI(endpointUrl + "/" + SEARCH_SUFFIX);
-        }
-        catch (Exception e){
+        } catch (URISyntaxException e) {
             log.error(e.getMessage(), e);
         }
         return Response.fromResponse(response).location(uri).build();
@@ -278,63 +377,121 @@ public class GroupWebService extends BaseScimWebService implements IGroupWebServ
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi
+    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/groups.write" })
     @RefAdjusted
-    @ApiOperation(value = "PATCH operation", notes = "https://tools.ietf.org/html/rfc7644#section-3.5.2", response = GroupResource.class)
     public Response patchGroup(
             PatchRequest request,
             @PathParam("id") String id,
             @QueryParam(QUERY_PARAM_ATTRIBUTES) String attrsList,
-            @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList){
+            @QueryParam(QUERY_PARAM_EXCLUDED_ATTRS) String excludedAttrsList) {
 
         Response response;
         try{
             log.debug("Executing web service method. patchGroup");
 
-            String usersUrl=userWebService.getEndpointUrl();
-            GroupResource group=new GroupResource();
-            GluuGroup gluuGroup=groupService.getGroupByInum(id);  //group is not null (check associated decorator method)
+            response = inspectPatchRequest(request, GroupResource.class);
+            if (response != null) return response;
+            
+            GluuGroup gluuGroup = groupService.getGroupByInum(id);			
+            if (gluuGroup == null) return notFoundResponse(id, groupResourceType);
 
+            response = externalConstraintsService.applyEntityCheck(gluuGroup, request,
+                    httpHeaders, uriInfo, HttpMethod.PATCH, groupResourceType);
+            if (response != null) return response;
+
+            boolean skipValidation = isMembersValidationSkipped();
+            boolean displayExcluded = isDisplayExcluded(skipValidation, attrsList, excludedAttrsList);
+
+            GroupResource group = new GroupResource();
             //Fill group instance with all info from gluuGroup
-            scim2GroupService.transferAttributesToGroupResource(gluuGroup, group, endpointUrl, usersUrl);
+            scim2GroupService.transferAttributesToGroupResource(gluuGroup, group,
+                !skipValidation, endpointUrl, usersUrl);
+            GroupResource original = (GroupResource) ScimResourceUtil.clone(group);
 
+            Predicate<String> p = skipValidation ? selectionFilterSkipPredicate : (filter -> false);
             //Apply patches one by one in sequence
-            for (PatchOperation po : request.getOperations())
-                group=(GroupResource) scim2PatchService.applyPatchOperation(group, po);
+            for (PatchOperation po : request.getOperations()) {
+                group = (GroupResource) scim2PatchService.applyPatchOperation(group, po, p);
+            }
 
-            //Throws exception if final representation does not pass overall validation
             log.debug("patchGroup. Revising final resource representation still passes validations");
-            executeDefaultValidation(group);
+            //Throw exception if final representation does not pass overall validation
+            executeValidation(group);
+            checkDisplayNameExistence(group.getDisplayName(), id);
 
             //Update timestamp
-            String now=ISODateTimeFormat.dateTime().withZoneUTC().print(System.currentTimeMillis());
-            group.getMeta().setLastModified(now);
+            group.getMeta().setLastModified(DateUtil.millisToISOString(System.currentTimeMillis()));
+
+            if (!displayExcluded) {
+                scim2GroupService.restoreMembersDisplay(original, group);
+            }
 
             //Replaces the information found in gluuGroup with the contents of group
-            scim2GroupService.replaceGroupInfo(gluuGroup, group, endpointUrl, usersUrl);
+            scim2GroupService.replaceGroupInfo(gluuGroup, group, skipValidation, !displayExcluded,
+                    endpointUrl, usersUrl);
 
-            String json=resourceSerializer.serialize(group, attrsList, excludedAttrsList);
-            response=Response.ok(new URI(group.getMeta().getLocation())).entity(json).build();
-        }
-        catch (InvalidAttributeValueException e){
+            String json = resourceSerializer.serialize(group, attrsList, excludedAttrsList);
+            response = Response.ok(new URI(group.getMeta().getLocation())).entity(json).build();
+        } catch (DuplicateEntryException e) {
+            log.error(e.getMessage());
+            response = getErrorResponse(Response.Status.CONFLICT, ErrorScimType.UNIQUENESS, e.getMessage());
+        } catch (InvalidAttributeValueException e) {
             log.error(e.getMessage(), e);
-            response=getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.MUTABILITY, e.getMessage());
-        }
-        catch (SCIMException e){
-            response=getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_SYNTAX, e.getMessage());
-        }
-        catch (Exception e){
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.MUTABILITY, e.getMessage());
+        } catch (SCIMException e) {
+            response = getErrorResponse(Response.Status.BAD_REQUEST, ErrorScimType.INVALID_SYNTAX, e.getMessage());
+        } catch (Exception e) {
             log.error("Failure at patchGroup method", e);
-            response=getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+            response = getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
         }
         return response;
 
     }
 
+    private boolean isDisplayExcluded(boolean skipMembersValidation, String include, String exclude) {
+
+        boolean excluded = false;
+        if (skipMembersValidation) {
+            //In overhead bypass mode, regardless of other params, display is excluded from outputs
+            excluded = true;
+        } else if (include != null) {
+            excluded = !scim2GroupService.membersDisplayInPath(include);
+        } else if (exclude != null) {
+            excluded = scim2GroupService.membersDisplayInPath(exclude);
+        }
+        
+        if (excluded) {
+            log.info("Members display will be ignored");
+        }
+        return excluded;
+
+    }
+    
+    private boolean isMembersValidationSkipped() {
+        
+        boolean overheadBypass = uriInfo.getQueryParameters().getFirst(GROUP_OVERHEAD_BYPASS_PARAM) != null
+                || httpHeaders.getHeaderString(GROUP_OVERHEAD_BYPASS_PARAM) != null;
+        
+        if (overheadBypass) {
+            log.info("{} param found", GROUP_OVERHEAD_BYPASS_PARAM);
+        }
+        return overheadBypass;
+        
+    }
+
     @PostConstruct
     public void setup(){
-        //Do not use getClass() here... a typical weld issue...
-        endpointUrl=appConfiguration.getBaseEndpoint() + GroupWebService.class.getAnnotation(Path.class).value();
+        //Do not use getClass() here...
+        init(GroupWebService.class);
+        usersUrl = userWebService.getEndpointUrl();
+        groupResourceType = ScimResourceUtil.getType(GroupResource.class);
+
+        //An approximate predicate that tries to guess if a SCIM filter contains
+        //an expression involving display attribute
+        selectionFilterSkipPredicate = filter -> {
+            String filth = filter.replaceAll(ScimResourceUtil.getDefaultSchemaUrn(GroupResource.class) + ":", "");
+            return filth.matches(".*display\\s+(eq|ne|co|sw|ew|gt|lt|ge|le|pr).*");
+        };        
     }
 
 }

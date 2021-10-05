@@ -1,6 +1,6 @@
 package org.gluu.oxtrust.service.init;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.Properties;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -11,20 +11,20 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.gluu.exception.ConfigurationException;
+import org.gluu.model.custom.script.CustomScriptType;
+import org.gluu.orm.util.properties.FileConfiguration;
 import org.gluu.oxauth.model.util.SecurityProviderUtility;
 import org.gluu.oxtrust.service.ApplicationFactory;
 import org.gluu.oxtrust.service.logger.LoggerService;
-import org.gluu.oxtrust.service.external.ExternalScimService;
-import org.gluu.model.custom.script.CustomScriptType;
 import org.gluu.persist.PersistenceEntryManager;
 import org.gluu.persist.PersistenceEntryManagerFactory;
 import org.gluu.persist.model.PersistenceConfiguration;
 import org.gluu.persist.service.PersistanceFactoryService;
-import org.gluu.service.custom.script.CustomScriptManager;
 import org.gluu.service.PythonService;
+//import org.gluu.service.external.ExternalPersistenceExtensionService;
+import org.gluu.service.custom.script.CustomScriptManager;
 import org.gluu.service.timer.QuartzSchedulerManager;
 import org.gluu.util.StringHelper;
-import org.gluu.util.properties.FileConfiguration;
 import org.gluu.util.security.PropertiesDecrypter;
 import org.gluu.util.security.StringEncrypter;
 import org.slf4j.Logger;
@@ -59,6 +59,9 @@ public class AppInitializer {
 
 	@Inject
 	private CustomScriptManager customScriptManager;
+	
+	//@Inject
+	//private ExternalPersistenceExtensionService externalPersistenceExtensionService;
     
     //@Inject
     //private ExternalScimService externalScimService;
@@ -75,7 +78,7 @@ public class AppInitializer {
         configurationFactory.initTimer();
         loggerService.initTimer();
         //externalScimService.init();
-        customScriptManager.initTimer(Collections.singletonList(CustomScriptType.SCIM));
+        customScriptManager.initTimer(Arrays.asList(CustomScriptType.SCIM, CustomScriptType.PERSISTENCE_EXTENSION));
         logger.info("Initialized!");
 
     }
@@ -133,6 +136,13 @@ public class AppInitializer {
         if (entryManager == null) {
             logger.error("No EntryManager could be obtained");
         }
+        /* else {
+        	// "attach" the persistence extension to this entry manager        	
+        	externalPersistenceExtensionService.executePersistenceExtensionAfterCreate(backendProperties, entryManager);
+        	// The above does not seem to have much effect because ExternalPersistenceExtensionService#reloadExternal
+        	// calls the method passing null for the first param
+        }
+        */
         return entryManager;
 
     }

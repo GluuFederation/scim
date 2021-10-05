@@ -1,8 +1,3 @@
-/*
- * oxTrust is available under the MIT License (2008). See http://opensource.org/licenses/MIT for full text.
- *
- * Copyright (c) 2013, Gluu
- */
 package org.gluu.oxtrust.ws.rs.scim2;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -11,18 +6,22 @@ import static org.gluu.oxtrust.model.scim2.Constants.SEARCH_REQUEST_SCHEMA_ID;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.Date;
 import java.util.List;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.Path;
 
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+
 import org.apache.commons.lang.StringUtils;
+
 import org.gluu.config.oxtrust.AppConfiguration;
 import org.gluu.oxtrust.model.GluuCustomPerson;
 import org.gluu.oxtrust.model.exception.SCIMException;
@@ -38,15 +37,15 @@ import org.gluu.oxtrust.model.scim2.patch.PatchRequest;
 import org.gluu.oxtrust.model.scim2.util.IntrospectUtil;
 import org.gluu.oxtrust.model.scim2.util.ResourceValidator;
 import org.gluu.oxtrust.model.scim2.util.ScimResourceUtil;
+import org.gluu.oxtrust.model.scim2.util.DateUtil;
 import org.gluu.oxtrust.service.IPersonService;
 import org.gluu.oxtrust.service.antlr.scimFilter.util.FilterUtil;
-import org.gluu.oxtrust.service.external.ExternalScimService;
 import org.gluu.oxtrust.service.scim2.ExtensionService;
+import org.gluu.oxtrust.service.scim2.ExternalConstraintsService;
 import org.gluu.oxtrust.service.scim2.UserPersistenceHelper;
 import org.gluu.oxtrust.service.scim2.serialization.ListResponseJsonSerializer;
 import org.gluu.oxtrust.service.scim2.serialization.ScimResourceSerializer;
 import org.gluu.persist.model.SortOrder;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 
 /**
@@ -75,18 +74,34 @@ public class BaseScimWebService {
 
     @Inject
     UserPersistenceHelper userPersistenceHelper;
-
+    
     @Inject
-    ExternalScimService externalScimService;
+    ExternalConstraintsService externalConstraintsService;
+
+    @Context
+    HttpHeaders httpHeaders;
+
+    @Context
+    UriInfo uriInfo;
 
     public static final String SEARCH_SUFFIX = ".search";
+    
+    private static final String CN_ENV_VAR = "GLUU_VERSION";
 
     String endpointUrl;
 
     public String getEndpointUrl() {
         return endpointUrl;
     }
-
+    
+    public Response notFoundResponse(String id, String resourceType) {
+        
+        log.info("{} with inum {} not found", resourceType, id);
+        return getErrorResponse(Response.Status.NOT_FOUND, 
+                String.format("%s with id %s not found", resourceType, id));
+        
+    }
+    
     public static Response getErrorResponse(Response.Status status, String detail) {
         return getErrorResponse(status.getStatusCode(), null, detail);
     }
@@ -120,12 +135,6 @@ public class BaseScimWebService {
 
     }
 
-    String getUserInumFromDN(String deviceDn){
-        String baseDn=personService.getDnForPerson(null).replaceAll("\\s*","");
-        deviceDn=deviceDn.replaceAll("\\s*","").replaceAll("," + baseDn, "");
-        return deviceDn.substring(deviceDn.indexOf("inum=")+5);
-    }
-
     int getMaxCount(){
         return appConfiguration.getScimProperties().getMaxCount();
     }
@@ -134,12 +143,21 @@ public class BaseScimWebService {
         List<String> values=headers.getRequestHeaders().get(name);
         return (values==null || values.size()==0) ? null : values.get(0);
     }
+        
+    protected void init(Class<? extends BaseScimWebService> cls) {
+    	
+    	if (endpointUrl == null) {
+			String base = appConfiguration.getBaseEndpoint(); 
+			base = System.getenv(CN_ENV_VAR) == null ? base : base.replaceFirst("/identity", "/scim");
+			endpointUrl = base + cls.getAnnotation(Path.class).value();
+    	}
+    	
+    }
 
     protected void assignMetaInformation(BaseScimResource resource){
 
         //Generate some meta information (this replaces the info client passed in the request)
-        long now=new Date().getTime();
-        String val= ISODateTimeFormat.dateTime().withZoneUTC().print(now);
+        String val = DateUtil.millisToISOString(System.currentTimeMillis());
 
         Meta meta=new Meta();
         meta.setResourceType(ScimResourceUtil.getType(resource.getClass()));
@@ -151,17 +169,17 @@ public class BaseScimWebService {
 
     }
 
-    protected void executeDefaultValidation(BaseScimResource resource) throws SCIMException {
+    protected void executeValidation(BaseScimResource resource) throws SCIMException {
         executeValidation(resource, false);
     }
 
-    protected void executeValidation(BaseScimResource resource, boolean skipRequired) throws SCIMException {
+    protected void executeValidation(BaseScimResource resource, boolean laxRequiredness) throws SCIMException {
 
         ResourceValidator rv=new ResourceValidator(resource, extService.getResourceExtensions(resource.getClass()));
-        if (!skipRequired){
-            rv.validateRequiredAttributes();
+        if (!laxRequiredness){
             rv.validateSchemasAttribute();
         }
+        rv.validateRequiredAttributes(laxRequiredness);        
         rv.validateValidableAttributes();
         //By section 7 of RFC 7643, we are not forced to constrain attribute values when they have a list of canonical values associated
         //rv.validateCanonicalizedAttributes();
@@ -170,7 +188,7 @@ public class BaseScimWebService {
     }
 
     //Transform scim attribute to LDAP attribute
-    String translateSortByAttribute(Class<? extends BaseScimResource> cls, String sortBy) {
+    protected String translateSortByAttribute(Class<? extends BaseScimResource> cls, String sortBy) {
 
         String type=ScimResourceUtil.getType(cls);
         if (StringUtils.isEmpty(sortBy) || type==null)
@@ -199,23 +217,27 @@ public class BaseScimWebService {
 
     }
 
-    protected Response prepareSearchRequest(List<String> schemas, String filter, String sortBy, String sortOrder, Integer startIndex,
-                                            Integer count, String attrsList, String excludedAttrsList, SearchRequest request){
+    protected Response prepareSearchRequest(List<String> schemas, String filter,
+            String sortBy, String sortOrder, Integer startIndex, Integer count,
+            String attrsList, String excludedAttrsList, SearchRequest request) {
 
-        Response response=null;
+        Response response = null;
 
-        if (schemas!=null && schemas.size()==1 && schemas.get(0).equals(SEARCH_REQUEST_SCHEMA_ID)) {
+        if (schemas != null && schemas.size() == 1 && schemas.get(0).equals(SEARCH_REQUEST_SCHEMA_ID)) {
+
             count = count == null ? getMaxCount() : count;
             //Per spec, a negative value SHALL be interpreted as "0" for count
-            if (count<0)
-                count=0;
+            if (count < 0) {
+                count = 0;
+            }
 
             if (count <= getMaxCount()) {
                 //SCIM searches are 1 indexed
                 startIndex = (startIndex == null || startIndex < 1) ? 1 : startIndex;
 
-                if (StringUtils.isEmpty(sortOrder) || !sortOrder.equals(SortOrder.DESCENDING.getValue()))
+                if (StringUtils.isEmpty(sortOrder) || !sortOrder.equals(SortOrder.DESCENDING.getValue())) {
                     sortOrder = SortOrder.ASCENDING.getValue();
+                }
 
                 request.setSchemas(schemas);
                 request.setAttributes(attrsList);
@@ -225,18 +247,17 @@ public class BaseScimWebService {
                 request.setSortOrder(sortOrder);
                 request.setStartIndex(startIndex);
                 request.setCount(count);
-            }
-            else
+            } else {
                 response = getErrorResponse(BAD_REQUEST, ErrorScimType.TOO_MANY, "Maximum number of results per page is " + getMaxCount());
-        }
-        else
+            }
+        } else {
             response = getErrorResponse(BAD_REQUEST, ErrorScimType.INVALID_SYNTAX, "Wrong schema(s) supplied in Search Request");
-
+        }
         return response;
 
     }
 
-    String getListResponseSerialized(int total, int startIndex, List<BaseScimResource> resources, String attrsList,
+    protected String getListResponseSerialized(int total, int startIndex, List<BaseScimResource> resources, String attrsList,
                                      String excludedAttrsList, boolean ignoreResults) throws IOException{
 
         ListResponse listResponse = new ListResponse(startIndex, resources.size(), total);
