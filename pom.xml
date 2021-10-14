@@ -20,7 +20,13 @@
 		
 		<gluu.parent.version>4.3.1-SNAPSHOT</gluu.parent.version>
 		<gluu.version>4.3.1-SNAPSHOT</gluu.version>
-        <weld.version>3.1.2.Final</weld.version>
+		<weld.version>3.1.2.Final</weld.version>
+
+		<sonar.projectKey>GluuFederation_scim</sonar.projectKey>
+                <sonar.moduleKey>${project.groupId}:${project.artifactId}</sonar.moduleKey>
+                <sonar.organization>gluufederation</sonar.organization>
+                <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+	
 	</properties>
 
 	<prerequisites>
