@@ -1,10 +1,13 @@
 package gluu.scim2.client;
 
-import gluu.scim2.client.rest.CloseableClient;
-import gluu.scim2.client.rest.FreelyAccessible;
-import gluu.scim2.client.rest.provider.AuthorizationInjectionFilter;
-import gluu.scim2.client.rest.provider.ListResponseProvider;
-import gluu.scim2.client.rest.provider.ScimResourceProvider;
+import java.io.Serializable;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
@@ -16,16 +19,13 @@ import org.apache.logging.log4j.Logger;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
-import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpClient4Engine;
+import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpClient43Engine;
 
-import java.io.Serializable;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.util.Optional;
-import java.util.stream.Stream;
-
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.MultivaluedMap;
+import gluu.scim2.client.rest.CloseableClient;
+import gluu.scim2.client.rest.FreelyAccessible;
+import gluu.scim2.client.rest.provider.AuthorizationInjectionFilter;
+import gluu.scim2.client.rest.provider.ListResponseProvider;
+import gluu.scim2.client.rest.provider.ScimResourceProvider;
 
 /**
  * The base class for specific SCIM clients.
@@ -62,7 +62,7 @@ public abstract class AbstractScimClient<T> implements CloseableClient, Invocati
          "Resteasy Proxy Framework" of RESTEasy JAX-RS user guide
          */
         if (System.getProperty("httpclient.multithreaded") == null) {
-            client = new ResteasyClientBuilder().build();
+            client = ((ResteasyClientBuilder) ResteasyClientBuilder.newBuilder()).build();
         } else {
             PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
             //Change defaults if supplied
@@ -76,9 +76,9 @@ public abstract class AbstractScimClient<T> implements CloseableClient, Invocati
             CloseableHttpClient httpClient = HttpClients.custom()
 					.setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build())
             		.setConnectionManager(cm).build();
-            ApacheHttpClient4Engine engine = new ApacheHttpClient4Engine(httpClient);
+            ApacheHttpClient43Engine engine = new ApacheHttpClient43Engine(httpClient);
 
-            client = new ResteasyClientBuilder().httpEngine(engine).build();
+            client = ((ResteasyClientBuilder) ResteasyClientBuilder.newBuilder()).httpEngine(engine).build();
         }
         ResteasyWebTarget target = client.target(domain);
 
