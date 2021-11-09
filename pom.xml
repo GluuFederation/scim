@@ -10,7 +10,7 @@
 	<packaging>pom</packaging>
 	<version>4.4.0-SNAPSHOT</version>
 	<name>SCIM API</name>
-	<url>http://www.gluu.org</url>
+	<url>https://www.gluu.org</url>
 	
 	<properties>
 		<maven.min-version>3.3.9</maven.min-version>
