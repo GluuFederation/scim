@@ -8,7 +8,7 @@
 	<artifactId>scim-server</artifactId>
 	<name>SCIM API Server</name>
 	<packaging>war</packaging>
-	<url>http://www.gluu.org</url>
+	<url>https://www.gluu.org</url>
 	
 	<parent>
 		<groupId>org.gluu</groupId>
