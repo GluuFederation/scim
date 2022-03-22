@@ -36,7 +36,7 @@ import org.gluu.persist.PersistenceEntryManager;
 import org.gluu.persist.model.PagedResult;
 import org.gluu.persist.model.SortOrder;
 import org.gluu.search.filter.Filter;
-
+import org.gluu.util.StringHelper;
 import org.slf4j.Logger;
 
 @ApplicationScoped
@@ -185,9 +185,9 @@ public class Scim2GroupService implements Serializable {
 
 		Meta meta = new Meta();
 		meta.setResourceType(ScimResourceUtil.getType(res.getClass()));
-		meta.setCreated(gluuGroup.getAttribute("oxTrustMetaCreated"));
-		meta.setLastModified(gluuGroup.getAttribute("oxTrustMetaLastModified"));
-		meta.setLocation(gluuGroup.getAttribute("oxTrustMetaLocation"));
+		meta.setCreated(StringHelper.toString(gluuGroup.getAttribute("oxTrustMetaCreated")));
+		meta.setLastModified(StringHelper.toString(gluuGroup.getAttribute("oxTrustMetaLastModified")));
+		meta.setLocation(StringHelper.toString(gluuGroup.getAttribute("oxTrustMetaLocation")));
 		if (meta.getLocation() == null)
 			meta.setLocation(groupsUrl + "/" + gluuGroup.getInum());
 
