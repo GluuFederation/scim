@@ -9,7 +9,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.nio.file.Path;
 
-import org.gluu.oxauth.model.util.SecurityProviderUtility;
+import org.gluu.util.security.SecurityProviderUtility;
 
 /**
  * A factory class to obtain "client" objects that allow interaction with the SCIM service.
