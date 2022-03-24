@@ -13,7 +13,6 @@ import javax.inject.Named;
 import org.gluu.exception.ConfigurationException;
 import org.gluu.model.custom.script.CustomScriptType;
 import org.gluu.orm.util.properties.FileConfiguration;
-import org.gluu.oxauth.model.util.SecurityProviderUtility;
 import org.gluu.oxtrust.service.ApplicationFactory;
 import org.gluu.oxtrust.service.logger.LoggerService;
 import org.gluu.persist.PersistenceEntryManager;
@@ -26,6 +25,7 @@ import org.gluu.service.custom.script.CustomScriptManager;
 import org.gluu.service.timer.QuartzSchedulerManager;
 import org.gluu.util.StringHelper;
 import org.gluu.util.security.PropertiesDecrypter;
+import org.gluu.util.security.SecurityProviderUtility;
 import org.gluu.util.security.StringEncrypter;
 import org.slf4j.Logger;
 
