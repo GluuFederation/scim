@@ -1,6 +1,5 @@
 package gluu.scim2.listener;
 
-import org.gluu.oxauth.model.util.SecurityProviderUtility;
 import org.gluu.util.StringHelper;
 
 import org.apache.logging.log4j.LogManager;
