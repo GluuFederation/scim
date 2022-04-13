@@ -77,10 +77,6 @@
                     <groupId>org.glassfish</groupId>
                     <artifactId>jakarta.faces</artifactId>
                 </exclusion>
-                <exclusion>
-                	<groupId>org.gluu</groupId>
-                	<artifactId>oxcore-saml</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
