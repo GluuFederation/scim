@@ -172,14 +172,13 @@ public class UmaScimClient<T> extends AbstractScimClient<T> {
             String keyId = umaAatClientKeyId;
             if (StringHelper.isEmpty(keyId)) {
                 // Get first key
-                List<String> aliases = cryptoProvider.getKeys();
-                if (aliases.size() > 0) {
-                    keyId = aliases.get(0);
-                }
-            }
-
-            if (StringHelper.isEmpty(keyId)) {
-                throw new ScimInitializationException("UMA keyId is empty");
+                keyId = cryptoProvider.getKeys().stream().filter(k -> k.contains("_sig_")).findFirst().orElse(null);
+                
+                if (keyId == null)
+                    throw new ScimInitializationException("Unable to find a key in the keystore with use = sig");
+                
+            } else if (keyId.contains("_enc_")) {
+                throw new ScimInitializationException("Encryption keys not allowed. Supply a key having use = sig");
             }
 
             TokenRequest tokenRequest = new TokenRequest(GrantType.CLIENT_CREDENTIALS);
