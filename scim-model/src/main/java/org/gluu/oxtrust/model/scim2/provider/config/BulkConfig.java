@@ -11,9 +11,6 @@ import org.gluu.oxtrust.model.scim2.AttributeDefinition;
 /**
  * A class that holds values representing the configuration options for SCIM BULK operation (see section 5 of RFC 7643).
  */
-/*
- * Updated by jgomer on 2017-10-21
- */
 public class BulkConfig {
 
     @Attribute(description = "A Boolean value specifying whether or not the operation is supported.",
@@ -26,9 +23,9 @@ public class BulkConfig {
             isRequired = true,
             mutability = AttributeDefinition.Mutability.READ_ONLY,
             type = AttributeDefinition.Type.INTEGER)
-	private long maxOperations;
+	private int maxOperations;
 
-    @Attribute(description = " An integer value specifying the maximum payload size in bytes",
+    @Attribute(description = "An integer value specifying the maximum payload size in bytes",
             isRequired = true,
             mutability = AttributeDefinition.Mutability.READ_ONLY,
             type = AttributeDefinition.Type.INTEGER)
@@ -45,7 +42,7 @@ public class BulkConfig {
 	 * @param maxOperations Specifies the maximum number of operations supported per bulk.
 	 * @param maxPayloadSize Specifies the maximum payload size in bytes supported per bulk.
 	 */
-	public BulkConfig(boolean supported, long maxOperations, long maxPayloadSize) {
+	public BulkConfig(boolean supported, int maxOperations, long maxPayloadSize) {
 		this.supported = supported;
 		this.maxOperations = maxOperations;
 		this.maxPayloadSize = maxPayloadSize;
@@ -63,7 +60,7 @@ public class BulkConfig {
 	 * Retrieves the maximum number of operations supported in a bulk.
 	 * @return The maximum number of operations.
 	 */
-	public long getMaxOperations() {
+	public int getMaxOperations() {
 		return maxOperations;
 	}
 
@@ -79,7 +76,7 @@ public class BulkConfig {
         this.supported = supported;
     }
 
-    public void setMaxOperations(long maxOperations) {
+    public void setMaxOperations(int maxOperations) {
         this.maxOperations = maxOperations;
     }
 

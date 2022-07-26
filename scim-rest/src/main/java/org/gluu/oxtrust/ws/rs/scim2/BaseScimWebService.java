@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.commons.lang.StringUtils;
 
 import org.gluu.config.oxtrust.AppConfiguration;
+import org.gluu.config.oxtrust.ScimProperties;
 import org.gluu.oxtrust.model.GluuCustomPerson;
 import org.gluu.oxtrust.model.exception.SCIMException;
 import org.gluu.oxtrust.model.scim2.BaseScimResource;
@@ -89,6 +90,8 @@ public class BaseScimWebService {
     private static final String CN_ENV_VAR = "GLUU_VERSION";
 
     String endpointUrl;
+    
+    ScimProperties scimProperties;
 
     public String getEndpointUrl() {
         return endpointUrl;
@@ -135,8 +138,8 @@ public class BaseScimWebService {
 
     }
 
-    int getMaxCount(){
-        return appConfiguration.getScimProperties().getMaxCount();
+    int getMaxCount() {
+        return scimProperties.getMaxCount();
     }
 
     String getValueFromHeaders(HttpHeaders headers, String name){
@@ -151,6 +154,7 @@ public class BaseScimWebService {
 			base = System.getenv(CN_ENV_VAR) == null ? base : base.replaceFirst("/identity", "/scim");
 			endpointUrl = base + cls.getAnnotation(Path.class).value();
     	}
+        scimProperties = appConfiguration.getScimProperties();
     	
     }
 

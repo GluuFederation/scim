@@ -8,8 +8,6 @@ import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.Family.SUCCESSFUL;
 import static javax.ws.rs.core.Response.Status.Family.familyOf;
-import static org.gluu.oxtrust.model.scim2.Constants.MAX_BULK_OPERATIONS;
-import static org.gluu.oxtrust.model.scim2.Constants.MAX_BULK_PAYLOAD_SIZE;
 import static org.gluu.oxtrust.model.scim2.Constants.MEDIA_TYPE_SCIM_JSON;
 import static org.gluu.oxtrust.model.scim2.Constants.UTF8_CHARSET_FRAGMENT;
 import static org.gluu.oxtrust.ws.rs.scim2.BulkWebService.Verb.DELETE;
@@ -178,7 +176,7 @@ public class BulkWebService extends BaseScimWebService {
         Response response=null;
 
         if (request.getFailOnErrors()==null)
-            request.setFailOnErrors(MAX_BULK_OPERATIONS);
+            request.setFailOnErrors(scimProperties.getBulkMaxOperations());
 
         List<BulkOperation> operations=request.getOperations();
 
@@ -186,25 +184,25 @@ public class BulkWebService extends BaseScimWebService {
             response=getErrorResponse(BAD_REQUEST, ErrorScimType.INVALID_VALUE, "No operations supplied");
         else {
 
-            int contentLen;
+            long contentLen;
             try{
 //log.debug("CONT LEN {}", contentLength);
-                contentLen=Integer.valueOf(contentLength);
+                contentLen=Long.valueOf(contentLength);
             }
             catch (Exception e){
-                contentLen=MAX_BULK_PAYLOAD_SIZE;
+                contentLen=scimProperties.getBulkMaxPayloadSize();
             }
 
-            boolean payloadExceeded=contentLen > MAX_BULK_PAYLOAD_SIZE;
-            boolean operationsExceeded=operations.size() > MAX_BULK_OPERATIONS;
+            boolean payloadExceeded=contentLen > scimProperties.getBulkMaxPayloadSize();
+            boolean operationsExceeded=operations.size() > scimProperties.getBulkMaxOperations();
             StringBuilder sb=new StringBuilder();
 
             if (payloadExceeded)
                 sb.append("The size of the bulk operation exceeds the maxPayloadSize (").
-                        append(MAX_BULK_PAYLOAD_SIZE).append(" bytes). ");
+                        append(scimProperties.getBulkMaxPayloadSize()).append(" bytes). ");
             if (operationsExceeded)
                 sb.append("The number of operations exceed the maxOperations value (").
-                        append(MAX_BULK_OPERATIONS).append("). ");
+                        append(scimProperties.getBulkMaxOperations()).append("). ");
 
             if (sb.length()>0)
                 response=getErrorResponse(REQUEST_ENTITY_TOO_LARGE, sb.toString());
