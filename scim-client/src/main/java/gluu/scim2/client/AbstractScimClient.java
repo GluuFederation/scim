@@ -26,6 +26,7 @@ import gluu.scim2.client.rest.FreelyAccessible;
 import gluu.scim2.client.rest.provider.AuthorizationInjectionFilter;
 import gluu.scim2.client.rest.provider.ListResponseProvider;
 import gluu.scim2.client.rest.provider.ScimResourceProvider;
+import org.jboss.resteasy.client.jaxrs.internal.ResteasyClientBuilderImpl;
 
 /**
  * The base class for specific SCIM clients.
@@ -62,7 +63,7 @@ public abstract class AbstractScimClient<T> implements CloseableClient, Invocati
          "Resteasy Proxy Framework" of RESTEasy JAX-RS user guide
          */
         if (System.getProperty("httpclient.multithreaded") == null) {
-            client = ((ResteasyClientBuilder) ResteasyClientBuilder.newBuilder()).build();
+            client = new ResteasyClientBuilderImpl().build();
         } else {
             PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
             //Change defaults if supplied
@@ -78,7 +79,7 @@ public abstract class AbstractScimClient<T> implements CloseableClient, Invocati
             		.setConnectionManager(cm).build();
             ApacheHttpClient43Engine engine = new ApacheHttpClient43Engine(httpClient);
 
-            client = ((ResteasyClientBuilder) ResteasyClientBuilder.newBuilder()).httpEngine(engine).build();
+            client = new ResteasyClientBuilderImpl().httpEngine(engine).build();
         }
         ResteasyWebTarget target = client.target(domain);
 
