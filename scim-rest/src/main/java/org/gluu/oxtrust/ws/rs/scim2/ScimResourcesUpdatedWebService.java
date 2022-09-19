@@ -220,6 +220,7 @@ public class ScimResourcesUpdatedWebService extends BaseScimWebService {
 
     @PostConstruct
     private void init() {
+        init(ScimResourcesUpdatedWebService.class);
         ldapBackend = scimFilterParserService.isLdapBackend();
         attributeDataTypes = new HashMap<>();
         attributeService.getAllAttributes().forEach(ga -> attributeDataTypes.put(ga.getName(), ga.getDataType()));
