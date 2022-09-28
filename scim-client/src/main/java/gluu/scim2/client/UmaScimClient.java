@@ -180,6 +180,7 @@ public class UmaScimClient<T> extends AbstractScimClient<T> {
             } else if (keyId.contains("_enc_")) {
                 throw new ScimInitializationException("Encryption keys not allowed. Supply a key having use = sig");
             }
+            logger.info("Using keyId={}", keyId);
 
             TokenRequest tokenRequest = new TokenRequest(GrantType.CLIENT_CREDENTIALS);
             tokenRequest.setAuthenticationMethod(AuthenticationMethod.PRIVATE_KEY_JWT);
