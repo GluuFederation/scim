@@ -246,6 +246,12 @@ public class ComplexSearchUserTest extends UserBaseTest {
         assertEquals(listResponse.getItemsPerPage(), users.length);
         assertEquals(listResponse.getResources().size(), users.length);
 
+        // Dump result set
+        logger.debug("Result set in searchSortByExternalId test");
+        for (UserResource user : users) {
+            logger.debug("{} : {}", user.getId(), user.getExternalId());
+        }
+
         for (int i=1; i<users.length; i++) {
             String exId1=users[i-1].getExternalId();
             String exId2=users[i].getExternalId();
