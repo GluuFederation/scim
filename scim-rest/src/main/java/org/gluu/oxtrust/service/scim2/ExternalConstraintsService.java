@@ -11,10 +11,12 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang.StringUtils;
 
+import org.gluu.config.oxtrust.ScimMode;
 import org.gluu.oxtrust.model.scim2.SearchRequest;
 import org.gluu.oxtrust.service.external.ExternalScimService;
 import org.gluu.oxtrust.service.external.OperationContext;
 import org.gluu.oxtrust.service.external.TokenDetails;
+import org.gluu.oxtrust.service.JsonConfigurationService;
 import org.gluu.persist.model.base.Entry;
 import org.gluu.persist.PersistenceEntryManager;
 
@@ -31,6 +33,9 @@ public class ExternalConstraintsService {
 
     @Inject
     private PersistenceEntryManager entryManager;
+
+    @Inject
+    private JsonConfigurationService jsonConfigurationService;
 
     @Inject
     ExternalScimService externalScimService;
@@ -83,36 +88,37 @@ public class ExternalConstraintsService {
         ctx.setQueryParams(uriInfo.getQueryParameters());
         ctx.setRequestHeaders(httpHeaders.getRequestHeaders());
         
-        String token = Optional.ofNullable(httpHeaders.getHeaderString(HttpHeaders.AUTHORIZATION))
-                .map(authz -> authz.replaceFirst("Bearer\\s+", "")).orElse(null);
+        ScimMode mode = jsonConfigurationService.getOxTrustappConfiguration().getScimProperties()
+                .getProtectionMode();
 
-        TokenDetails details = getDatabaseToken(token);
-        if (details == null) {
-            log.warn("Unable to get token details");
-            details = new TokenDetails();
+        if (!ScimMode.BYPASS.equals(mode)) {        
+            String token = Optional.ofNullable(httpHeaders.getHeaderString(HttpHeaders.AUTHORIZATION))
+                    .map(authz -> authz.replaceFirst("Bearer\\s+", "")).orElse(null);
+
+            TokenDetails details = getDatabaseToken(token, mode);
+            if (details == null) {
+                log.warn("Unable to get token details");
+                details = new TokenDetails();
+            }
+
+            details.setValue(token);
+            ctx.setTokenDetails(details);
         }
-
-        details.setValue(token);
-        ctx.setTokenDetails(details);
         return ctx;
 
     }
     
-    private TokenDetails getDatabaseToken(String token) {
+    private TokenDetails getDatabaseToken(String token, ScimMode mode) {
         
         String hashedToken = token.startsWith("{sha256Hex}") ? token : DigestUtils.sha256Hex(token);
         try {
-            return entryManager.find(TokenDetails.class,
-                    String.format("tknCde=%s,%s", hashedToken, TOKENS_DN));
+            String dn = ScimMode.UMA.equals(mode) ? "ou=uma_rpt," : "";
+            dn = String.format("tknCde=%s,%s", hashedToken, dn + TOKENS_DN);
+
+            return entryManager.find(TokenDetails.class, dn);
         } catch (Exception e) {
-            try {
-                log.error(e.getMessage());
-                return entryManager.find(TokenDetails.class,
-                    String.format("tknCde=%s,%s", hashedToken, "ou=uma_rpt," + TOKENS_DN));
-            } catch (Exception e2) {
-                log.error(e2.getMessage());
-                return null;
-            }
+            log.warn(e.getMessage());
+            return null;
         }
         
     }
