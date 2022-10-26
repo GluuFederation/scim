@@ -176,7 +176,7 @@ public class ScimClientFactory {
                 clientSecret, secretPostAuthnMethod);
     }
     
-    public ClientSideService getOAuthClient(String domain, String OIDCMetadataUrl,
+    public static ClientSideService getOAuthClient(String domain, String OIDCMetadataUrl,
             String clientId, Path keyStorePath, String keyStorePassword, String keyId) throws Exception {
         return getOAuthClient(defaultInterface, domain, OIDCMetadataUrl, clientId,
                 keyStorePath, keyStorePassword, keyId);

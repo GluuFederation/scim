@@ -108,6 +108,7 @@ public class FullUserTest extends UserBaseTest {
         //Used to generate a random Unicode char
         String rnd = UUID.randomUUID().toString().substring(0, 4);
         String unicodeStr = String.valueOf(Character.toChars(Integer.parseInt(rnd, 16)));
+        logger.debug("Using random unicode character (HEX): {}", rnd);
 
         Name name = user.getName();
         name.setGivenName(String.format("with %cquotes%c", quote, quote));
