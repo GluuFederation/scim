@@ -14,3 +14,4 @@ target
 
 server/.tern-project
 /bin/
+test-output

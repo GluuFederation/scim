@@ -85,7 +85,7 @@ public class BulkWebService extends BaseScimWebService {
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/bulk" })
+    @ProtectedApi(scopes = { "https://gluu.org/scim/bulk" })
     public Response processBulkOperations(BulkRequest request) {
 
         Response response=prepareRequest(request, getValueFromHeaders(httpHeaders, "Content-Length"));

@@ -120,7 +120,7 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/fido.write" })
+    @ProtectedApi(scopes = { "https://gluu.org/scim/fido.write" })
     public Response createDevice() {
         log.debug("Executing web service method. createDevice");
         return getErrorResponse(Response.Status.NOT_IMPLEMENTED, "Not implemented; device registration only happens via the FIDO API.");
@@ -130,7 +130,7 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
     @GET
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/fido.read" })
+    @ProtectedApi(scopes = { "https://gluu.org/scim/fido.read" })
     @RefAdjusted
     public Response getDeviceById(@PathParam("id") String id,
                            @QueryParam("userId") String userId,
@@ -167,7 +167,7 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/fido.write" })
+    @ProtectedApi(scopes = { "https://gluu.org/scim/fido.write" })
     @RefAdjusted
     public Response updateDevice(
             FidoDeviceResource fidoDeviceResource,
@@ -226,7 +226,7 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
     @DELETE
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/fido.write" })
+    @ProtectedApi(scopes = { "https://gluu.org/scim/fido.write" })
     public Response deleteDevice(@PathParam("id") String id) {
 
         Response response;
@@ -254,7 +254,7 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
     @GET
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/fido.read" })
+    @ProtectedApi(scopes = { "https://gluu.org/scim/fido.read" })
     @RefAdjusted
     public Response searchDevices(
             @QueryParam("userId") String userId,
@@ -277,7 +277,7 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/fido.read" })
+    @ProtectedApi(scopes = { "https://gluu.org/scim/fido.read" })
     @RefAdjusted
     public Response searchDevicesPost(SearchRequest searchRequest, @QueryParam("userId") String userId) {
 
@@ -413,7 +413,7 @@ public class FidoDeviceWebService extends BaseScimWebService implements IFidoDev
     @Consumes({MEDIA_TYPE_SCIM_JSON, MediaType.APPLICATION_JSON})
     @Produces({MEDIA_TYPE_SCIM_JSON + UTF8_CHARSET_FRAGMENT, MediaType.APPLICATION_JSON + UTF8_CHARSET_FRAGMENT})
     @HeaderParam("Accept") @DefaultValue(MEDIA_TYPE_SCIM_JSON)
-    @ProtectedApi(oauthScopes = { "https://gluu.org/scim/fido.write" })
+    @ProtectedApi(scopes = { "https://gluu.org/scim/fido.write" })
     @RefAdjusted
     public Response patchDevice(
             PatchRequest request,
