@@ -133,15 +133,25 @@ public class UserPersistenceHelper {
 
         log.info("syncing email ...");
         List<String> oxTrustEmails = customPerson.getAttributeList("oxTrustEmail");
+        int len = oxTrustEmails.size();
 
-        if (!oxTrustEmails.isEmpty()) {
+        if (len > 0) {
             ObjectMapper mapper = ServiceUtil.getObjectMapper();
-            String[] newMails = new String[oxTrustEmails.size()];
-
-            for (int i = 0; i < newMails.length; i++) {
-                newMails[i] = mapper.readValue(oxTrustEmails.get(i), Email.class).getValue();
+            List<String> newMails = new ArrayList<>(len);
+            int prima = -1;
+            
+            for (int i = 0; i < len; i++) {
+                Email email = mapper.readValue(oxTrustEmails.get(i), Email.class);
+                newMails.add(email.getValue());
+                
+                if (prima == -1 && Optional.ofNullable(email.getPrimary()).orElse(false)) {
+                    prima = i;
+                }
             }
-            customPerson.setAttribute("mail", newMails);
+            if (prima >= 1) {
+                newMails.add(0, newMails.remove(prima));
+            }
+            customPerson.setAttribute("mail", newMails.toArray(new String[0]));
         } else {
             customPerson.setAttribute("mail", new String[0]);
         }
