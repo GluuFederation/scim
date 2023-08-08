@@ -59,6 +59,7 @@
 		<module>scim-server</module>
 		<module>scim-server-fips</module>
 		<module>scim-client</module>
+		<module>scim-client-jakarta</module>
 	</modules>
 	
 	<dependencyManagement>
