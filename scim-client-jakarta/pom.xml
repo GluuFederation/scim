@@ -6,7 +6,7 @@
  	
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>scim-client-jakarta</artifactId>
-	<name>SCIM Client</name>
+	<name>SCIM Client Jakarta EE</name>
 	<packaging>jar</packaging>
 	<url>https://www.gluu.org</url>
 
@@ -61,9 +61,8 @@
     <reporting>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.4</version>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
