@@ -28,18 +28,21 @@ public class FullUserTest extends UserBaseTest {
 
     @Parameters("user_full_create")
     @Test(dependsOnGroups="avgTestFinished")
-    public void createFull(String json){
+    public void createFull(String json) {
+
         logger.debug("Creating user from json...");
         user=createUserFromJson(json);
-
         //Confirm extended attrs info is there
-        //For help on usage of org.gluu.oxtrust.model.scim2.CustomAttributes class, read its api docs (oxtrust-scim maven project)
-        CustomAttributes custAttrs=user.getCustomAttributes(USER_EXT_SCHEMA_ID);
+        confirmExtendedAttrs(user);
 
-        assertNotNull(custAttrs.getValue("scimCustomFirst", String.class));
-        assertNotNull(custAttrs.getValues("scimCustomSecond", Date.class));
-        assertNotNull(custAttrs.getValue("scimCustomThird", Integer.class));
-        assertEquals(custAttrs.getValues("scimCustomSecond", Date.class).size(), 1);
+        //Confirm extended attrs info is there upon retrieval 
+        Response response = client.searchUsers("id eq \"" + user.getId() +  "\"", null, 1, 
+                null, null, null, null);
+        assertEquals(response.getStatus(), OK.getStatusCode());
+
+        UserResource other = response.readEntity(ListResponse.class).getResources()
+                .stream().map(usrClass::cast).findFirst().get();        
+        confirmExtendedAttrs(other);
 
     }
 
@@ -153,6 +156,18 @@ public class FullUserTest extends UserBaseTest {
     @Test(dependsOnGroups = "lastTests", alwaysRun = true)
     public void delete() {
         deleteUser(user);
+    }
+
+    private void confirmExtendedAttrs(UserResource user) {
+
+        //Check api docs of CustomAttributes class
+        CustomAttributes custAttrs = user.getCustomAttributes(USER_EXT_SCHEMA_ID);
+
+        assertNotNull(custAttrs.getValue("scimCustomFirst", String.class));
+        assertNotNull(custAttrs.getValues("scimCustomSecond", Date.class));
+        assertNotNull(custAttrs.getValue("scimCustomThird", Integer.class));
+        assertEquals(custAttrs.getValues("scimCustomSecond", Date.class).size(), 1);
+
     }
 
 }
