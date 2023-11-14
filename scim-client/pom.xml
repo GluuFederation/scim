@@ -76,7 +76,7 @@
         <!-- Security -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk15on</artifactId>
+            <artifactId>bcprov-jdk18on</artifactId>
         </dependency>
 
         <!-- Gluu -->
