@@ -59,6 +59,7 @@
 		<module>scim-server</module>
 		<module>scim-server-fips</module>
 		<module>scim-client</module>
+		<module>scim-client-jakarta</module>
 	</modules>
 	
 	<dependencyManagement>
@@ -121,10 +122,10 @@
 					<version>2.1.1</version>
 				</plugin>
 				<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>findbugs-maven-plugin</artifactId>
-					<version>3.0.4</version>
-				</plugin>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>4.7.3.5</version>
+                </plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-javadoc-plugin</artifactId>
