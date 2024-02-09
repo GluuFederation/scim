@@ -82,7 +82,7 @@
         </classes>
     </test>
 
-    <test name="Fido Devices Test" enabled="false">
+    <test name="Fido Devices Test" enabled="true">
         <classes>
             <class name="gluu.scim2.client.singleresource.FidoU2fDeviceTest" />
             <class name="gluu.scim2.client.singleresource.Fido2DeviceTest" />

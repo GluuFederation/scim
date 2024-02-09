@@ -10,10 +10,10 @@ import org.gluu.oxtrust.model.scim2.user.UserResource;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 import java.util.*;
 
-import static javax.ws.rs.core.Response.Status.*;
+import static jakarta.ws.rs.core.Response.Status.*;
 
 import static org.testng.Assert.*;
 
