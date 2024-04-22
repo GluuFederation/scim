@@ -7,7 +7,7 @@ info:
   license:
     name: Apache 2
     url: https://github.com/GluuFederation/scim/blob/master/LICENSE
-  version: 4.5.4
+  version: 4.5.5
 servers:
 - url: https://your.gluu.server.com/identity/restv1/scim/v2
 tags:
