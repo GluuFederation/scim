@@ -8,7 +8,7 @@
 	<groupId>org.gluu</groupId>
 	<artifactId>scim</artifactId>
 	<packaging>pom</packaging>
-	<version>4.5.4-SNAPSHOT</version>
+	<version>4.5.4.Final</version>
 	<name>SCIM API</name>
 	<url>https://www.gluu.org</url>
 	
@@ -19,8 +19,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		
 
-		<gluu.parent.version>4.5.4-SNAPSHOT</gluu.parent.version>
-		<gluu.version>4.5.4-SNAPSHOT</gluu.version>
+		<gluu.parent.version>4.5.4.Final</gluu.parent.version>
+		<gluu.version>4.5.4.Final</gluu.version>
     <weld.version>3.1.2.Final</weld.version>
 
 		<sonar.projectKey>GluuFederation_scim</sonar.projectKey>
